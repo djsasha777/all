@@ -1,0 +1,216 @@
+{{- if .Values.tunnel.enable }}
+{{- if .Values.tunnel.standalone }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tunnel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tunnel
+  template:
+    metadata:
+      labels:
+        app: tunnel
+    spec:
+      hostNetwork: true
+      hostPID: true
+      hostIPC: true
+      restartPolicy: Always
+      containers:
+      - image: djsasha777/tunnel:{{ .Values.tunnel.image }}
+        name: tunnel
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: script
+          mountPath: /tmp
+        - name: host
+          mountPath: /host
+      volumes:
+      - name: script
+        configMap:
+          name: tunnel-cm
+      - name: host
+        hostPath:
+          path: /tmp/install
+{{- else }}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: tunnel
+spec:
+  selector:
+    matchLabels:
+      job: tunnel
+  template:
+    metadata:
+      labels:
+        job: tunnel
+    spec:
+      hostNetwork: true
+      hostPID: true
+      hostIPC: true
+      restartPolicy: Always
+      containers:
+      - image: djsasha777/tunnel:{{ .Values.tunnel.image }}
+        name: tunnel
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: script
+          mountPath: /tmp
+        - name: host
+          mountPath: /host
+      volumes:
+      - name: script
+        configMap:
+          name: tunnel-cm
+      - name: host
+        hostPath:
+          path: /tmp/install
+{{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tunnel-cm
+data:
+  tunnel.sh: |
+    #!/bin/bash
+    PATH=/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin
+    export PATH
+
+    [ "$(whoami)" != 'root' ] && echo "Run it as root." && exit 1
+    LOCIP="$(ifconfig {{ .Values.tunnel.localDev }} | grep 'inet' | awk '{print $2}' | cut -d '.' -f 4 | sed '1q')"
+    echo "locip is $LOCIP"
+    SERVER_SSH_PORT="22"
+    SERVER_SSH_IP="{{ .Values.tunnel.remoteHost }}"
+    CLIENT_ETHERNET="{{ .Values.tunnel.localDev }}"
+    SERVER_ETHERNET="{{ .Values.tunnel.remoteDev }}"
+    CLIENT_TUNNEL="tun$LOCIP"
+    SERVER_TUNNEL="tun$LOCIP"
+    CLIENT_TUN_IP="{{ .Values.tunnel.connectNet }}$LOCIP.$LOCIP"
+    SERVER_TUN_IP="{{ .Values.tunnel.connectNet }}$LOCIP.1"
+    CLIENT_NET="{{ .Values.tunnel.adressPool }}/{{ .Values.tunnel.adressPrefix }}"
+    CLIENT_GATEWAY="{{ .Values.tunnel.adressPoolcr }}1"
+    SERVER_NET="192.168.1.0/24"
+    SERVER_GATEWAY="192.168.1.1"
+
+    start()
+    {
+    ssh -NTCf -o ServerAliveInterval=30 \
+        -o ServerAliveCountMax=6 \
+        -o ExitOnForwardFailure=yes \
+        -o Tunnel=point-to-point \
+        -w "${CLIENT_TUNNEL#tun}:${SERVER_TUNNEL#tun}" \
+        root@${SERVER_SSH_IP} -p ${SERVER_SSH_PORT}
+    if [ $? -ne 0 ]; then exit 1; fi
+    echo "ssh tunnel is working."
+    ssh -T root@${SERVER_SSH_IP} -p ${SERVER_SSH_PORT} > /dev/null 2>&1 << eeooff
+        # ip route replace default via ${SERVER_GATEWAY}
+        ip route del ${CLIENT_NET} via ${SERVER_TUN_IP}
+        ip link set ${SERVER_TUNNEL} down
+        iptables -t nat -D POSTROUTING -s ${CLIENT_TUN_IP}/32 -o ${SERVER_ETHERNET} -j MASQUERADE
+        iptables -D FORWARD -p tcp --syn -s ${CLIENT_TUN_IP}/32 -j TCPMSS --set-mss 1356
+        iptables -t nat -D POSTROUTING -s ${SERVER_NET} -o ${SERVER_TUNNEL} -j MASQUERADE
+        ifconfig ${SERVER_TUNNEL} > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            echo 1 > /proc/sys/net/ipv4/ip_forward
+            ip link set ${SERVER_TUNNEL} up
+            ip addr add ${SERVER_TUN_IP}/32 peer ${CLIENT_TUN_IP} dev ${SERVER_TUNNEL}
+            ip route add ${CLIENT_NET} via ${SERVER_TUN_IP}
+            # ip route replace default via ${SERVER_TUN_IP}
+            iptables -t nat -A POSTROUTING -s ${CLIENT_TUN_IP}/32 -o ${SERVER_ETHERNET} -j MASQUERADE
+            iptables -A FORWARD -p tcp --syn -s ${CLIENT_TUN_IP}/32 -j TCPMSS --set-mss 1356
+            iptables -t nat -A POSTROUTING -s ${SERVER_NET} -o ${SERVER_TUNNEL} -j MASQUERADE
+        fi
+        exit
+    eeooff
+    if [ $? -ne 0 ]; then exit 1; fi
+    echo "remote start."
+    ifconfig ${CLIENT_TUNNEL} > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo 1 > /proc/sys/net/ipv4/ip_forward
+        ip link set ${CLIENT_TUNNEL} up
+        ip addr add ${CLIENT_TUN_IP}/32 peer ${SERVER_TUN_IP} dev ${CLIENT_TUNNEL}
+        ip route add ${SERVER_NET} via ${CLIENT_TUN_IP}
+        # ip route replace default via ${CLIENT_TUN_IP}
+        iptables -t nat -A POSTROUTING -s ${SERVER_TUN_IP}/32 -o ${CLIENT_ETHERNET} -j MASQUERADE
+        iptables -A FORWARD -p tcp --syn -s ${SERVER_TUN_IP}/32 -j TCPMSS --set-mss 1356
+        iptables -t nat -A POSTROUTING -s ${CLIENT_NET} -o ${CLIENT_TUNNEL} -j MASQUERADE
+        ping ${SERVER_TUN_IP} -i 60 > /dev/null 2>&1 &
+        echo "local start."
+    else
+        exit 1
+    fi
+    }
+
+    stop-srv()
+    {
+    ssh -T root@${SERVER_SSH_IP} -p ${SERVER_SSH_PORT} > /dev/null 2>&1 << eeooff
+        # ip route replace default via ${SERVER_GATEWAY}
+        ip route del ${CLIENT_NET} via ${SERVER_TUN_IP}
+        ip link set ${SERVER_TUNNEL} down
+        iptables -t nat -D POSTROUTING -s ${CLIENT_TUN_IP}/32 -o ${SERVER_ETHERNET} -j MASQUERADE
+        iptables -D FORWARD -p tcp --syn -s ${CLIENT_TUN_IP}/32 -j TCPMSS --set-mss 1356
+        iptables -t nat -D POSTROUTING -s ${SERVER_NET} -o ${SERVER_TUNNEL} -j MASQUERADE
+        exit
+    eeooff
+    if [ $? -eq 0 ]; then echo "remote stop."; fi
+    }
+
+    stop()
+    {
+    # ip route replace default via ${CLIENT_GATEWAY}
+    ip route del ${SERVER_NET} via ${CLIENT_TUN_IP}
+    ip link set ${CLIENT_TUNNEL} down
+    iptables -t nat -D POSTROUTING -s ${SERVER_TUN_IP}/32 -o ${CLIENT_ETHERNET} -j MASQUERADE
+    iptables -D FORWARD -p tcp --syn -s ${SERVER_TUN_IP}/32 -j TCPMSS --set-mss 1356
+    iptables -t nat -D POSTROUTING -s ${CLIENT_NET} -o ${CLIENT_TUNNEL} -j MASQUERADE
+    CLIENT_SSH_PID=`ps -ef | grep 'ssh -NTCf -o' | grep -v grep | head -n1 | awk '{print $2}'`
+    if [ -n "${CLIENT_SSH_PID}" ]; then kill -9 ${CLIENT_SSH_PID}; fi
+    if [ -n "`pidof ping`" ]; then pidof ping | xargs kill -9; fi
+    } > /dev/null 2>&1
+
+    usage()
+    {
+    echo "usage:"
+    echo "    $0 -start"
+    echo "    $0 -stop"
+    echo ""
+    echo "for ssh:"
+    echo "    nohup $0 -start > /dev/null 2>&1"
+    }
+
+    case $1 in
+        "--start" | "-start")
+            stop
+            start
+            ;;
+        "--stop" | "-stop")
+            stop-srv
+            stop
+            echo "local stop."
+            ;;
+        *)
+            usage
+            ;;
+    esac
+
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: pool-tun
+spec:
+  blocks:
+    - cidr: {{ .Values.tunnel.adressPool }}/{{ .Values.tunnel.adressPrefix }}
+  disabled: false
+  serviceSelector:
+    matchLabels:
+      pool: tunnel
+{{- end }}

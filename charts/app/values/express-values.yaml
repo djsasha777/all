@@ -1,0 +1,31 @@
+application:
+  name: mongo-express
+  istioInject: false
+  image: mongo-express
+  svc:
+    ports:
+      - name: main
+        port: 8081
+  replicaCount: 1
+  ingressRoutes:
+    - name: mongo-express
+      domainUrl: spongo.ru
+      path: /
+      service: mongo-express
+      port: 8081
+  env:
+    - name: ME_CONFIG_MONGODB_ADMINUSERNAME
+      value: root
+    - name: ME_CONFIG_MONGODB_SERVER
+      value: mongodb-svc
+    - name: ME_CONFIG_MONGODB_ADMINPASSWORD
+      value: password
+    
+configMap:
+  - env1: 1234
+
+integrations:
+  - name: epk
+    host: qwertyu.ru
+    meshPort: 6666
+    type: http

@@ -1,0 +1,15 @@
+# Default values for iotapp.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+application:
+  name: console
+  namespace:
+    name: console
+  image: quay.io/openshift/origin-console:4.12
+  svc:
+    port: 80
+    type: LoadBalancer
+    target:
+      port: 9000
+  replicaCount: 1

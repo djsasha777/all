@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.application.name }}-app-cm
+data:
+{{- range $key, $val := .Values.configMap }}
+  {{- range $pkey, $pval := $val }}
+  {{ $pkey}}: "{{ $pval }}"
+  {{- end }}
+{{- end }}

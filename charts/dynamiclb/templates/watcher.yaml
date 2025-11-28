@@ -1,0 +1,54 @@
+{{- if .Values.watcher.enable }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: watcher
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: watcher
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: watcher
+    spec:
+      containers:
+        - name: watcher
+          image: djsasha777/watcher:{{ .Values.watcher.image }}
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: '1'
+              memory: 1Gi
+            requests:
+              cpu: 500m
+              memory: 500Mi
+          env:
+          - name: REPO
+            value: {{ .Values.watcher.repo }}
+          - name: BRANCH
+            value: {{ .Values.watcher.branch }}
+          - name: FILEPATH
+            value: {{ .Values.watcher.filepath }}
+          - name: TOKEN
+            value: {{ .Values.watcher.token }}
+          - name: EXTERNAL
+            value: '{{ .Values.watcher.external }}'
+{{- end }}

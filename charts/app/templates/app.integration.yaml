@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.application.name }}-integration-cm
+data:
+  {{- range $integration := .Values.integrations }}
+  {{ $integration.name }}: "{{ $integration.type }}://{{ $integration.host }}:{{ $integration.meshPort }}"
+  {{- end }}

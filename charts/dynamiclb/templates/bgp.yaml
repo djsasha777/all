@@ -1,0 +1,68 @@
+{{- if .Values.bgp.enable }}
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumBGPClusterConfig
+metadata:
+  name: cilium-bgp-lb
+spec:
+  bgpInstances:
+  - name: "external"
+    localASN: {{ .Values.bgp.localAsn }}
+    peers:
+{{- range $peers := .Values.bgp.remoteAsn }}
+    - name: "{{ $peers.name }}"
+      peerASN: {{ $peers.asn }}
+      peerAddress: {{ $peers.ip }}
+      peerConfigRef:
+        name: "cilium-peer"
+{{- end }}
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumBGPPeerConfig
+metadata:
+  name: cilium-peer
+spec:
+  timers:
+    holdTimeSeconds: 9
+    keepAliveTimeSeconds: 3
+  ebgpMultihop: 4
+  gracefulRestart:
+    enabled: true
+    restartTimeSeconds: 15
+  families:
+    - afi: ipv4
+      safi: unicast
+      advertisements:
+        matchLabels:
+          advertise: "bgp-advertise"
+
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumBGPAdvertisement
+metadata:
+  name: bgp-advertise
+  labels:
+    advertise: bgp-advertise
+spec:
+  advertisements:
+    - advertisementType: "Service"
+      service:
+        addresses:
+          - LoadBalancerIP
+      selector:
+        matchLabels:
+          pool: pool-bgp
+
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: pool-bgp
+spec:
+  blocks:
+    - cidr: {{ .Values.bgp.adressPool }}/{{ .Values.bgp.adressPrefix }}
+  disabled: false
+  serviceSelector:
+    matchLabels:
+      pool: bgp
+{{- end }}

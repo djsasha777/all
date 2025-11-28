@@ -1,0 +1,48 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.application.name }}
+  labels:
+    name: {{ .Values.application.name }}
+    app: {{ .Values.application.name }}
+spec:
+  replicas: {{ .Values.application.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.application.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.application.name }}
+      annotations:
+{{ if .Values.application.istioInject }}
+        sidecar.istio.io/inject: "true"
+{{- end }}
+    spec:
+      containers:
+      - name: {{ .Values.application.name }}
+        image: {{ .Values.application.image }}
+        resources:
+          limits:
+            memory: {{ .Values.application.memoryLimit | default "1Gi" }}
+            cpu: {{ .Values.application.cpuLimit | default "1000m" }}
+          requests:
+            memory: {{ .Values.application.memoryRequest | default "200Mi" }}
+            cpu: {{ .Values.application.cpuRequest | default "200m" }}
+        ports:
+{{- range $ports := .Values.application.svc.ports }}
+        - containerPort: {{ $ports.port }}
+{{- end }}
+        env:
+{{- range $envs := .Values.application.env }}
+        - name: {{ $envs.name }}
+          value: {{ $envs.value }}
+{{- end }}
+        envFrom:
+          - configMapRef:
+              name: {{ .Values.application.name }}-app-cm
+{{ if .Values.application.istioInject }}
+          - configMapRef:
+              name: {{ .Values.application.name }}-integration-cm
+{{- end }}

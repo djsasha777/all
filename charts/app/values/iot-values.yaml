@@ -1,0 +1,35 @@
+application:
+  name: iot
+  istioInject: false
+  image: ghcr.io/djsasha777/iot/iot/iotbackend:0741895
+  svc:
+    ports:
+      - name: main
+        port: 8088
+      - name: monitoring
+        port: 9090
+    # expose:
+    #   exposeLabel: 'expose: lb'
+    #   pool: tunnel
+  replicaCount: 1
+  ingressRoutes:
+    # - name: iot
+    #   domainUrl: spongo.ru
+    #   subdomain:
+    #     url: iot
+    #     inControllerIP: 12.12.12.1
+    #   type: letsencript #letsencript or istio or nor
+    #   path: /
+    #   service: iot-svc
+    #   port: 8088
+  env:
+    - name: MONGO_MONGODB_USERNAME
+      value: mongoiot
+    - name: MONGO_MONGODB_PASSWORD
+      value: mongopass
+    - name: MONGO_MONGODB_SERVER
+      value: mongodb-svc
+    - name: MONGO_MONGODB_DATABASE
+      value: mongoiot      
+configMap:
+  - kakayatoperemennaya: dataone

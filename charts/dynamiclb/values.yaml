@@ -1,0 +1,35 @@
+tunnel:
+  enable: true
+  connectNet: 10.10.
+  adressPool: 12.12.12.0
+  adressPoolcr: 12.12.12.
+  adressPrefix: 24
+  image: latest
+  localDev: ens18
+  remoteDev: eth0
+  remoteHost: 91.149.218.39
+  standalone: true
+
+bgp:
+  enable: false
+  adressPool: 11.11.11.0
+  adressPrefix: 24
+  localAsn: 66000
+  remoteAsn:
+    - name: as-1
+      asn: 66001
+      ip: 191.168.111.1
+
+test:
+  enable: true
+  pool: tunnel #or bgp
+  external: "expose: lb" #label for external exposing
+
+watcher:
+  enable: true
+  image: main
+  repo: https://github.com/djsasha777/infra.git
+  branch: main
+  filepath: ansible/loadbalancer-haproxy/group_vars/all.yaml
+  token: token_for_github_push
+  external: "expose: lb"
