@@ -1,0 +1,122 @@
+enable
+
+conf t
+
+hostname EDGE1
+
+mpls label range 1000 1999
+
+username admin privilege 15 secret 0 cisco
+service password-encryption
+enable secret gorizont
+aaa new-model
+ip domain name my.domain
+ip name-server 8.8.8.8
+no ip domain-lookup
+ip ssh ver 2
+crypto key generate rsa general-keys modulus 1024
+line console 0
+password cisco
+line vty 0 4
+password cisco
+aaa authentication login vty local
+aaa authorization network default if-authenticated
+line vty 0 4
+transport input ssh
+
+ip cef
+ip cef load-sharing algorithm include-ports source destination
+
+interface Loopback0
+ ip address 10.0.0.1 255.255.255.255
+
+interface Ethernet0/0
+ ip address 80.80.80.1 255.255.255.0
+ mpls ip
+ no shutdown
+
+interface Ethernet0/1
+ bandwidth 9000
+ ip address 175.2.0.2 255.255.255.0
+ no shutdown
+
+interface Ethernet0/2
+ bandwidth 3000
+ ip address 174.1.0.2 255.255.255.0
+ no shutdown
+
+interface Ethernet0/3
+ bandwidth 2000
+ ip address 184.1.0.2 255.255.255.0
+ no shutdown
+
+interface Ethernet1/0
+ ip address 173.1.0.1 255.255.255.0
+ mpls ip
+ no shutdown
+
+interface Ethernet1/1
+ ip address 173.2.0.1 255.255.255.0
+ mpls ip
+ no shutdown
+
+interface Ethernet3/3
+ bandwidth 4000
+ ip address 124.1.0.2 255.255.255.0
+ no shutdown
+
+router ospf 1
+ network 10.0.0.0 0.0.0.255 area 1
+ network 80.80.80.0 0.0.0.255 area 1
+ network 173.1.0.0 0.0.0.255 area 1
+ network 173.2.0.0 0.0.0.255 area 1
+ default-information originate
+
+router bgp 56789
+ bgp router-id 10.0.0.1
+ bgp log-neighbor-changes
+ bgp bestpath as-path multipath-relax
+ bgp dmzlink-bw
+ network 10.10.10.0 mask 255.255.255.0
+ network 10.10.20.0 mask 255.255.255.0
+ neighbor 10.0.0.2 remote-as 56789
+ neighbor 10.0.0.2 update-source Loopback0
+ neighbor 10.0.0.2 send-label
+ neighbor 10.0.0.3 remote-as 56789
+ neighbor 10.0.0.3 update-source Loopback0
+ neighbor 10.0.0.3 next-hop-self
+ neighbor 10.0.0.4 remote-as 56789
+ neighbor 10.0.0.4 update-source Loopback0
+ neighbor 10.0.0.4 next-hop-self
+ neighbor 174.1.0.1 remote-as 3890
+ neighbor 174.1.0.1 password 7 00292A36256838
+ neighbor 174.1.0.1 prefix-list PREF-DEF in
+ neighbor 174.1.0.1 filter-list 100 out
+ neighbor 174.1.0.1 dmzlink-bw
+ neighbor 175.2.0.1 remote-as 65783
+ neighbor 175.2.0.1 password 7 00292A36256838
+ neighbor 175.2.0.1 prefix-list PREF-DEF in
+ neighbor 175.2.0.1 filter-list 100 out
+ neighbor 175.2.0.1 dmzlink-bw
+ neighbor 184.1.0.1 remote-as 11111
+ neighbor 184.1.0.1 password 7 00292A36256838
+ neighbor 184.1.0.1 prefix-list PREF-DEF in
+ neighbor 184.1.0.1 filter-list 100 out
+ neighbor 184.1.0.1 dmzlink-bw
+ neighbor 124.1.0.1 remote-as 22222
+ neighbor 124.1.0.1 password 7 00292A36256838
+ neighbor 124.1.0.1 prefix-list PREF-DEF in
+ neighbor 124.1.0.1 filter-list 100 out
+ neighbor 124.1.0.1 dmzlink-bw
+ maximum-paths 4
+ default-information originate
+
+ip as-path access-list 100 permit ^$
+
+ip prefix-list PREF-DEF seq 10 permit 0.0.0.0/0
+
+no cdp log mismatch duplex
+
+end
+
+wr

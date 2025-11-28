@@ -1,0 +1,39 @@
+
+cli
+configure
+set system root-authentication plain-text-password
+set system login user DJSASHA777 class operator authentication plain-text-password
+
+
+cli
+configure
+set system host-name PE2
+set system domain-name juniper.domain.com
+set system name-server 8.8.8.8
+set interfaces em3 unit 0 description to-AS-56789-2
+set interfaces em3 unit 0 family inet address 179.2.0.1/24
+set interfaces em4 unit 0 description to-AS-56789-1
+set interfaces em4 unit 0 family inet address 184.1.0.1/24
+set interfaces em5 unit 0 description to-INTERNET
+set interfaces em5 unit 0 family inet address 192.168.1.32/24
+set interfaces em7 unit 0 description to-AS-3890
+set interfaces em7 unit 0 family inet address 74.1.0.2/24
+set interfaces em6 unit 0 description to-AS-22222
+set interfaces em6 unit 0 family inet address 75.1.0.1/24
+set routing-options static route 0.0.0.0/0 next-hop 192.168.1.1
+set routing-options router-id 10.10.11.2
+set routing-options autonomous-system 11111
+set protocols bgp peer-as 56789
+set protocols bgp group TEST neighbor 74.1.0.1
+set protocols bgp group TEST multipath
+set policy-options prefix-list TEST 74.1.0.0/24
+set policy-options prefix-list TEST 84.1.0.0/24
+set policy-options prefix-list TEST 179.2.0.0/24
+set policy-options prefix-list TEST 75.1.0.0/24
+set policy-options policy-statement TESTPolicy term ACCEPT from prefix-list TEST
+set policy-options policy-statement TESTPolicy term ACCEPT then accept
+set policy-options policy-statement TESTPolicy then reject 
+set protocols bgp group TEST export TESTPolicy
+
+commit
+write memory

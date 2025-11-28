@@ -1,0 +1,136 @@
+enable
+
+conf t
+
+hostname DISTRIBUTION1
+
+mpls label range 5000 5999
+
+username admin privilege 15 secret 0 cisco
+service password-encryption
+enable secret gorizont
+aaa new-model
+ip domain name my.domain
+ip name-server 8.8.8.8
+no ip domain-lookup
+ip ssh ver 2
+crypto key generate rsa general-keys modulus 1024
+line console 0
+password cisco
+line vty 0 4
+password cisco
+aaa authentication login vty local
+aaa authorization network default if-authenticated
+line vty 0 4
+transport input ssh
+
+vlan 10,20,7,999
+
+ip dhcp excluded-address 10.10.10.1
+ip dhcp excluded-address 10.10.10.2
+ip dhcp excluded-address 10.10.10.3
+ip dhcp excluded-address 10.10.20.1
+ip dhcp excluded-address 10.10.20.2
+ip dhcp excluded-address 10.10.20.3
+
+ip dhcp pool pool10
+ network 10.10.10.0 255.255.255.0
+ default-router 10.10.10.1 
+ dns-server 8.8.8.8 
+
+ip dhcp pool pool20
+ network 10.10.20.0 255.255.255.0
+ default-router 10.10.20.1 
+ dns-server 8.8.8.8
+
+spanning-tree mode pvst
+spanning-tree extend system-id
+spanning-tree vlan 10,20,7 priority 24576
+
+interface Loopback0
+ ip address 10.0.0.5 255.255.255.255
+
+interface Ethernet0/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,7
+ switchport trunk native vlan 999
+ description TRUNK-BETWEEN-DISTRIBUTION
+ no shutdown
+
+interface Ethernet0/1
+ no switchport
+ ip address 172.0.4.2 255.255.255.0
+ mpls ip
+ no shutdown
+
+interface Ethernet0/2
+ no switchport
+ ip address 172.0.5.2 255.255.255.0
+ mpls ip
+ no shutdown
+
+interface Ethernet1/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,7
+ switchport trunk native vlan 999
+ description TRUNKING
+ no shutdown
+
+interface Ethernet1/1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,7
+ switchport trunk native vlan 999
+ description TRUNKING
+ no shutdown
+
+interface Ethernet1/2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,7
+ switchport trunk native vlan 999
+ description TRUNKING
+ no shutdown
+
+interface Ethernet1/3
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,7
+ switchport trunk native vlan 999
+ description TRUNKING
+ no shutdown
+
+interface Vlan10
+ ip address 10.10.10.2 255.255.255.0
+ standby 10 ip 10.10.10.1
+ standby 10 priority 150
+ standby 10 preempt
+ no shutdown
+
+interface Vlan20
+ ip address 10.10.20.2 255.255.255.0
+ standby 20 ip 10.10.20.1
+ standby 20 priority 150
+ standby 20 preempt
+ no shutdown
+
+interface Vlan7
+ ip address 7.0.0.2 255.255.255.0
+ standby 7 ip 7.0.0.1
+ standby 7 priority 150
+ standby 7 preempt
+ no shutdown
+
+router ospf 1
+ network 10.0.0.0 0.0.0.255 area 1
+ network 10.10.10.0 0.0.0.255 area 1
+ network 10.10.20.0 0.0.0.255 area 1
+ network 7.0.0.0 0.0.0.255 area 1
+ network 172.0.4.0 0.0.0.255 area 1
+ network 172.0.5.0 0.0.0.255 area 1
+
+ end
+
+wr

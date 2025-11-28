@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SPONGO</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column; /* Изменение направления расположения элементов */
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #fff;
+        }
+
+        button {
+            display: block;
+            width: 80vw; /* Ширину задаем относительно ширины экрана */
+            max-width: 300px; /* Ограничиваем максимальную ширину */
+            padding: 15px;
+            font-size: 1.5em;
+            background-color: #5e9ca0;
+            color: white;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2e6c80;
+        }
+    </style>
+</head>
+<body>
+    <ul style="list-style-type: none; padding: 0;">
+        <li><button onclick="window.location.href='https://player.spongo.ru'">PLAYER</button></li>
+        <li><button onclick="window.location.href='https://webdaw.spongo.ru'">WEBINDEX</button></li>
+        <li><button onclick="window.location.href='https://gitea.spongo.ru/'">GIT</button></li>
+        <li><button onclick="window.location.href='https://argo.spongo.ru'">ARGO</button></li>
+        <li><button onclick="window.location.href='https://home.spongo.ru'">SMARTHOME</button></li>
+    </ul>
+</body>
+</html>

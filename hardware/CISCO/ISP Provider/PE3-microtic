@@ -1,0 +1,20 @@
+# user - admin, password - none
+ip address add address 192.168.1.33/24 interface ether1
+ip route add gateway=192.168.1.1
+ip address add address 75.1.0.2/24 interface ether2
+ip address add address 76.1.0.1/24 interface ether5
+ip address add address 124.1.0.1/24 interface ether3
+ip address add address 178.2.0.1/24 interface ether4
+interface bridge add name=loopback0
+ip address add address 22.22.22.22/32 interface loopback0
+interface bridge add name=loopback1
+ip address add address 23.22.22.22/24 interface loopback1
+interface bridge add name=loopback2
+ip address add address 24.22.22.22/24 interface loopback2
+routing bgp instance set default as=22222 redistribute-static=yes redistribute-connected=yes router-id=22.22.22.22
+routing bgp network add network=22.22.22.22/32 synchronize=no
+routing bgp network add network=23.22.22.22/24 synchronize=no
+routing bgp network add network=24.22.22.22/24 synchronize=no
+routing bgp peer add remote-address=75.1.0.1 remote-as=11111 instance=default out-filter=AS11111-bgp-out in-filter=AS11111-bgp-in
+routing filter add action=accept chain=AS11111-bgp-out comment="" disabled=no invert-match=no prefix=109.205.240.0/21 set-bgp-prepend=3
+routing filter add action=discard chain=AS11111-bgp-out comment="" disabled=no invert-match=no

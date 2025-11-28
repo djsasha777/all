@@ -1,0 +1,38 @@
+[
+  {
+    "name": "server1-on",
+    "url": "http://ESP-E9E120.lan/on",
+    "type": "button",
+    "secure": false
+  },
+  {
+    "name": "server1-long",
+    "url": "http://ESP-E9E120.lan/long",
+    "type": "button",
+    "secure": false
+  },
+  {
+    "name": "server1-on-glob",
+    "url": "https://home.spongo.ru/on",
+    "type": "button",
+    "secure": true
+  },
+  {
+    "name": "server1-long-glob",
+    "url": "http://192.168.111.120/long",
+    "type": "button",
+    "secure": true
+  },
+  {
+    "name": "toggle1",
+    "url": "http://esp32s2-EAF6A6.lan/button1",
+    "type": "toggle",
+    "secure": false
+  },
+  {
+    "name": "toggle1sec",
+    "url": "https://home.spongo.ru/server3/button1",
+    "type": "toggle",
+    "secure": true
+  }
+]
