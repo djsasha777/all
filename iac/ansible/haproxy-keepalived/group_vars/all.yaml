@@ -1,0 +1,7 @@
+---
+bind_interface: eth0
+vip: 192.168.1.220
+bind_port: 8383
+keepalived_secret: password
+masterip1: 192.168.1.201
+masterip2: 192.168.1.202

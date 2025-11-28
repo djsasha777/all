@@ -1,0 +1,34 @@
+[EDGES]
+edge1 ansible_host=10.0.0.3
+edge2 ansible_host=10.0.0.4
+
+[CORES]
+core1 ansible_host=10.0.0.5
+core2 ansible_host=10.0.0.6
+
+[DISTRIBUTIONES]
+dist1 ansible_host=10.0.0.7
+dist2 ansible_host=10.0.0.8
+
+[ACCESSES]
+access1 ansible_host=10.10.10.201
+access2 ansible_host=10.10.10.202
+access3 ansible_host=10.10.10.203
+
+[all:vars]
+ansible_user=admin
+ansible_password=cisco
+ansible_connection=network_cli
+ansible_network_os=ios
+ansible_ssh_pass=cisco
+ansible_become=yes
+ansible_become_method=enable
+ansible_become_password=gorizont
+ansible_python_interpreter=/usr/bin/python3
+
+
+
+
+
+
+

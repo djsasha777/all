@@ -1,0 +1,31 @@
+---
+
+- name: SET TIME on routers
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: run sh time
+      ios_command:
+        commands: show clock
+      register: sh_clock_old
+
+    - name: Debug registered var
+      debug: var=sh_clock_old.stdout_lines
+
+    - name: set time
+      ios_command:
+        commands: clock set 12:00:00 Nov 1 2021
+
+    - name: run sh time new
+      ios_command:
+        commands: show clock
+      register: sh_clock_new
+
+    - name: Debug registered var
+      debug: var=sh_clock_new.stdout_lines
+
+  handlers:
+    - name: save config
+      ios_command:
+        commands: wr

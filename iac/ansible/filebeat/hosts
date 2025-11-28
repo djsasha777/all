@@ -1,0 +1,5 @@
+[filehost] 
+node1 ansible_ssh_host=192.168.1.111 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/root/.ssh/id_rsa
+node2 ansible_ssh_host=192.168.1.112 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/root/.ssh/id_rsa
+node3 ansible_ssh_host=192.168.1.113 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/root/.ssh/id_rsa
+node4 ansible_ssh_host=192.168.1.114 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/root/.ssh/id_rsa

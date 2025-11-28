@@ -1,0 +1,12 @@
+
+---
+- name: SAVE configs
+  hosts: all
+  connection: network_cli
+  gather_facts: false
+
+  tasks:
+
+    - name: save config
+      ios_command:
+        commands: wr

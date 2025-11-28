@@ -1,0 +1,34 @@
+
+---
+- name: Configure the login banner
+  hosts: CORES
+  connection: network_cli
+  gather_facts: false
+
+  tasks:
+
+    - name: Add configure the login banner
+      ios_banner:
+        banner: exec
+        text: |
+          #######################################################
+          #                                                     #
+          #     You have successfully entered this system       #
+          #     $(hostname) on line $(line). Be advised your    #
+          #     action are logged and audits are performed      #
+          #     daily. If you have any questions contact the    #
+          #     system administrator at +7 xx xx xx xx,        #
+          #     email admin'at'yourdomain.net.                  #
+          #                                                     #
+          #     Thank you                                       #
+          #                                                     #
+          #     Your name                                       #
+          #     Network Administrator                           #
+          #     $(domain)                                       #
+          #                                                     #
+          #######################################################
+        state: present
+
+    - name: save running to start-config when modified
+      ios_config:
+        save_when: modified

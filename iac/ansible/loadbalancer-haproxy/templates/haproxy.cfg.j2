@@ -1,0 +1,74 @@
+global
+	log /dev/log	local0
+	log /dev/log	local1 notice
+	chroot /var/lib/haproxy
+	stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+	stats timeout 30s
+	user haproxy
+	group haproxy
+	daemon
+
+defaults
+	log	global
+	mode	http
+	option	httplog
+	option	dontlognull
+        timeout connect 5000
+        timeout client  50000
+        timeout server  50000
+	errorfile 400 /etc/haproxy/errors/400.http
+	errorfile 403 /etc/haproxy/errors/403.http
+	errorfile 408 /etc/haproxy/errors/408.http
+	errorfile 500 /etc/haproxy/errors/500.http
+	errorfile 502 /etc/haproxy/errors/502.http
+	errorfile 503 /etc/haproxy/errors/503.http
+	errorfile 504 /etc/haproxy/errors/504.http
+
+frontend acme
+ bind {{ dnsIp }}:80
+ mode http
+ default_backend acme
+
+backend acme
+ mode http
+ #root acme
+ acl root hdr(host) -i {{ dnsName }}
+ use-server root if root
+ server root {{ acmeRoot.ip }}:{{ acmeRoot.port }}
+
+{% for host in acmeSubdomain %}
+
+ #{{ host.name }}
+ acl {{ host.name }} hdr(host) -i {{ host.name }}.{{ dnsName }}
+ use-server {{ host.name }} if {{ host.name }}
+ server {{ host.name }} {{ host.ip }}:{{ host.port }}
+
+{% endfor %}
+
+#DNS FORWARDER
+
+frontend main
+ bind {{ dnsIp }}:443
+ mode tcp
+ tcp-request inspect-delay 5s
+ tcp-request content accept if { req.ssl_hello_type 1 }
+ default_backend main
+ http-request redirect scheme https unless { ssl_fc }
+
+backend main
+ mode tcp
+ option ssl-hello-chk
+
+ #root haproxy
+ acl haproxyRoot req.ssl_sni -i {{ dnsName }}
+ use-server haproxyRoot if haproxyRoot
+ server haproxyRoot {{ haproxyRoot.ip }}:{{ haproxyRoot.port }}
+
+{% for host in haproxySubdomain %}
+
+ #{{ host.name }}
+ acl {{ host.name }} req.ssl_sni -i {{ host.name }}.{{ dnsName }}
+ use-server {{ host.name }} if {{ host.name }}
+ server {{ host.name }} {{ host.ip }}:{{ host.port }} {% if host.proxy == true %} send-proxy-v2 {% endif %}
+
+{% endfor %}

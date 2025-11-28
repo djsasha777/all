@@ -1,0 +1,165 @@
+---
+- name: install openconnect
+  hosts: server
+  vars:
+    ansible_user: root
+  tasks:
+
+    - name: apt update
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: install packages
+      ansible.builtin.apt:
+        name:
+          - gnutls-bin
+          - apache2-utils
+          - git
+          - ruby-ronn
+          - libbsd-dev
+          - libsystemd-dev
+          - libpcl-dev
+          - libwrap0-dev
+          - libgnutls28-dev
+          - libev-dev
+          - libpam0g-dev
+          - liblz4-dev
+          - libseccomp-dev
+          - libreadline-dev
+          - libnl-route-3-dev
+          - libkrb5-dev
+          - libradcli-dev
+          - libcurl4-gnutls-dev
+          - libcjose-dev
+          - libjansson-dev
+          - libprotobuf-c-dev
+          - libtalloc-dev
+          - libhttp-parser-dev
+          - protobuf-c-compiler
+          - gperf
+          - nuttcp
+          - lcov
+          - libuid-wrapper
+          - libpam-wrapper
+          - libnss-wrapper
+          - libsocket-wrapper
+          - iputils-ping
+          - freeradius
+          - gawk
+          - iproute2
+          - yajl-tools
+          - tcpdump
+        state: present
+
+    - name: Download code
+      ansible.builtin.command:
+        cmd: >-
+          git clone https://gitlab.com/openconnect/ocserv.git
+        creates: "ocserv"
+
+    - name: build
+      ansible.builtin.command:
+        cmd: >-
+          cd ocserv
+          autoreconf -fvi
+          ./configure && make
+          make install
+        creates: "/lib/systemd/system/ocserv.service"
+
+    - name: template openconnect service
+      template: 
+        src: templates/ocserv.service.tmpl.j2
+        dest: /etc/systemd/system/ocserv.service
+      notify:
+        - reDemon
+
+    - name: Create openconnect config directory
+      ansible.builtin.file:
+        path: "/etc/openconnect"
+        state: directory
+        mode: "0755"
+
+    - name: template ca template
+      template: 
+        src: templates/oc.ca.tmpl.j2
+        dest: /etc/openconnect/oc.ca.tmpl
+      notify:
+        - reCa
+        - restart
+
+    - name: template server cert template
+      template: 
+        src: templates/oc.server.tmpl.j2
+        dest: /etc/openconnect/oc.server.tmpl
+      notify:
+        - reCert
+        - restart
+
+    - name: Create ca key
+      ansible.builtin.command:
+        cmd: >-
+          certtool --generate-privkey --outfile /etc/openconnect/ca-key.pem
+        creates: "/etc/openconnect/ca-key.pem"
+
+    - name: Create ca cert
+      ansible.builtin.command:
+        cmd: >-
+          certtool --generate-self-signed --load-privkey /etc/openconnect/ca-key.pem --template /etc/openconnect/oc.ca.tmpl --outfile /etc/openconnect/ca-cert.pem
+        creates: "/etc/openconnect/ca-cert.pem"
+
+    - name: Create server key
+      ansible.builtin.command:
+        cmd: >-
+          certtool --generate-privkey --outfile /etc/openconnect/server-key.pem
+        creates: "/etc/openconnect/server-key.pem"
+
+    - name: Create server cert
+      ansible.builtin.command:
+        cmd: >-
+          certtool --generate-certificate --load-privkey /etc/openconnect/server-key.pem --load-ca-certificate /etc/openconnect/ca-cert.pem --load-ca-privkey /etc/openconnect/ca-key.pem --template /etc/openconnect/oc.server.tmpl --outfile /etc/openconnect/server-cert.pem
+        creates: "/etc/openconnect/server-cert.pem"
+
+    - name: template config
+      template: 
+        src: templates/oc.config.j2
+        dest: /etc/ocserv/ocserv.conf
+
+    - name: reload demon
+      ansible.builtin.command:
+        cmd: >-
+          systemctl daemon-reload
+
+    - name: Ensure openconnect is stoped
+      service:  
+        name: ocserv
+        state: stopped
+        enabled: yes
+
+    - name: Ensure openconnect is started
+      service:  
+        name: ocserv
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: reCa
+      ansible.builtin.command:
+        cmd: >-
+          certtool --generate-self-signed --load-privkey /etc/openconnect/ca-key.pem --template /etc/openconnect/oc.ca.tmpl --outfile /etc/openconnect/ca-cert.pem
+
+    - name: reCert
+      ansible.builtin.command:
+        cmd: >-
+          certtool --generate-certificate --load-privkey /etc/openconnect/server-key.pem --load-ca-certificate /etc/openconnect/ca-cert.pem --load-ca-privkey /etc/openconnect/ca-key.pem --template /etc/openconnect/oc.server.tmpl --outfile /etc/openconnect/server-cert.pem
+
+    - name: reDemon
+      ansible.builtin.command:
+        cmd: >-
+          systemctl daemon-reload
+
+    - name: restart
+      service:  
+        name: ocserv
+        state: restarted
+        enabled: yes
+

@@ -1,0 +1,13 @@
+{{- if .Values.app.addons }}
+{{- range $addon := .Values.app.addons }}
+        checksum/{{ $addon.name }}: {{ include (print $.Template.BasePath $addon.path) . | sha256sum }}
+{{- end }}
+{{- end }}
+
+
+app:
+  addons:
+    - name: cmadd
+      path: /cm.yaml
+    - name: cm2
+      path: /cm.yaml

@@ -1,0 +1,27 @@
+---
+- name: install haproxy
+  hosts: server
+  vars:
+    ansible_user: root
+  tasks:
+
+    - name: apt update
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: install packages
+      ansible.builtin.apt:
+        name:
+          - haproxy
+        state: present
+
+    - name: Ensure haproxy conf is set
+      template: 
+        src: templates/haproxy.cfg.j2 
+        dest: /etc/haproxy/haproxy.cfg
+
+    - name: Ensure haproxy is restarted
+      service:  
+        name: haproxy
+        state: restarted
+        enabled: yes

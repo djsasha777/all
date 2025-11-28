@@ -1,0 +1,37 @@
+---
+- hosts: "filehost"
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+  
+  tasks:
+    - name: Download package
+      ansible.builtin.get_url:
+        url: "{{ filebeat_package_url }}"
+        dest: /home/filebeat.deb
+        mode: '0777'
+
+    - name: Install deb package for filebeat
+      ansible.builtin.command: dpkg -i /home/filebeat.deb
+
+    - name: Template filebeat config
+      template:
+        src: ./templates/filebeat.yml.j2
+        dest: /etc/filebeat/filebeat.yml
+
+    - name: filebeat modules enable system
+      ansible.builtin.command: filebeat modules enable system
+
+    - name: Template system config
+      template:
+        src: ./templates/system.yml.j2
+        dest: /etc/filebeat/modules.d/system.yml
+
+    - name: filebeat setup
+      ansible.builtin.command: filebeat setup
+
+    - name: Ensure filebeat is running (and enable it at boot)
+      ansible.builtin.command: service filebeat start

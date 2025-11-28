@@ -1,0 +1,77 @@
+---
+- name: install nebula
+  hosts: server
+  vars:
+    ansible_user: root
+  tasks:
+
+    - name: Enable sysctl ip_forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: "1"
+        state: present
+
+    - name: Create nebula config directory
+      ansible.builtin.file:
+        path: "{{ nebula.dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Download nebula
+      ansible.builtin.get_url:
+        url: "{{ nebula.url }}"
+        dest: "{{ nebula.dir }}/nebula.tar.gz"
+        mode: "0644"
+
+    - name: Unarchive nebula
+      ansible.builtin.unarchive:
+        src: "{{ nebula.dir }}/nebula.tar.gz"
+        dest: "{{ nebula.dir }}"
+        remote_src: true
+
+    - name: Create nebula CA cert
+      ansible.builtin.command:
+        cmd: >-
+          {{ nebula.dir }}/nebula-cert ca
+          -name "{{ nebula.caName }}"
+          -duration {{ nebula.duration }}
+          -out-key "{{ nebula.dir }}/ca.key"
+          -out-crt "{{ nebula.dir }}/ca.crt"
+        creates: "{{ nebula.dir }}/ca.key"
+
+    - name: Create nebula certs for clients
+      ansible.builtin.command:
+        cmd: >-
+          {{ nebula.dir }}/nebula-cert sign
+          -name "{{ item.key }}"
+          -ip "{{ item.value.ip | mandatory }}"
+          -ca-key "{{ nebula.dir }}/ca.key"
+          -ca-crt "{{ nebula.dir }}/ca.crt"
+          -out-key "{{ nebula.dir }}/{{ item.key }}.key"
+          -out-crt "{{ nebula.dir }}/{{ item.key }}.crt"
+        creates: "{{ nebula.dir }}/{{ item.key }}.crt"
+      loop: "{{ nebula.clients | dict2items }}"
+
+    - name: Template nebula config
+      template: 
+        src: templates/nebula.yaml.j2 
+        dest: "{{ nebula.dir }}/config.yaml"
+        mode: "0644"
+
+    - name: Template nebula systemd unit
+      template:
+        src: nebula.service.j2
+        dest: "/etc/systemd/system/nebula.service"
+        mode: "0644"
+
+    - name: Ensure nebula is started
+      service:  
+        name: nebula
+        state: started
+        enabled: yes
+
+    - name: Ensure nebula is restarted
+      service:  
+        name: nebula
+        state: restarted
+        enabled: yes

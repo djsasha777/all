@@ -1,0 +1,97 @@
+---
+- hosts: "loadbalancers"
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+  
+  vars_prompt:
+
+   - name: "zerotier_network_id"
+     prompt: "Enter zerotier network id"
+     private: no 
+
+  tasks:
+  
+    - name: Add ZeroTier PGP key
+      apt_key:
+        url: "{{ zerotier_gpg_url }}"
+        id: "{{ zerotier_gpg_fingerprint }}"
+
+    - name: Check if Ubuntu release has dedicated repo
+      uri:
+        url: "{{ zerotier_download_base_url }}/debian/{{ zerotier_deb_release_repo }}"
+      failed_when: false
+      when:
+        - ansible_facts['distribution'] == "Ubuntu"
+      register: release_repo
+
+    - block:
+      - name: Overwrite Ubuntu release repo name
+        set_fact:
+          zerotier_deb_release_repo: bionic
+
+      - name: Re-gather facts
+        setup: ~
+
+      when:
+        - ansible_facts['distribution'] == "Ubuntu"
+        - ansible_facts['distribution_major_version'] == "18"
+        - release_repo.status == 404
+
+    - name: Add ZeroTier APT repository
+      apt_repository:
+        repo: deb {{ zerotier_download_base_url }}/debian/{{ zerotier_deb_release_repo }} {{ zerotier_deb_release_repo }} main
+        filename: zerotier
+      register: zerotier_repo
+
+    - name: Install zerotier-one
+      package:
+        name: zerotier-one
+        state: present
+        update_cache: yes
+      register: zerotier_client
+
+    - name: Start zerotier-one service
+      service:
+        name: zerotier-one
+        state: started
+      when:
+      - zerotier_client is succeeded
+      notify:
+      - enable zerotier-one
+
+    - name: Join ZeroTier network
+      command: zerotier-cli join {{ zerotier_network_id }}
+      args:
+        creates: /var/lib/zerotier-one/networks.d/{{ zerotier_network_id }}.conf
+      tags:
+      - configuration
+ 
+    - name: Install haproxy
+      apt: 
+        name:
+          - haproxy
+        state: present
+
+    - name: Enable service haproxy
+      service: 
+        name: haproxy
+        enabled: yes
+
+    - name: Copy config
+      template:
+          src: haproxy.cfg
+          dest: /etc/haproxy/haproxy.cfg
+          mode: 0644
+
+    - name: Reboot...
+      reboot:
+        post_reboot_delay: 10
+        reboot_timeout: 40
+        connect_timeout: 60
+        test_command: uptime
+
+    - pause: seconds=20

@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+
+    tools {
+        yq 'yq' // Assumes yq tool installed in Jenkins tools
+        git 'git' // If you want a specific Git tool configured in Jenkins; optional
+    }
+
+    parameters {
+        string(name: 'NAME', defaultValue: '', description: 'Введите name')
+        string(name: 'HOST', defaultValue: '', description: 'Введите host')
+        string(name: 'MESHPORT', defaultValue: '', description: 'Введите meshPort')
+    }
+
+    stages {
+        stage('Checkout repository') {
+            steps {
+                // Clean workspace before checkout
+                deleteDir()
+                // Clone repo from develop branch
+                git branch: 'develop', url: 'https://your.git.server/myrepo.git'
+            }
+        }
+
+        stage('Update values.yaml') {
+            steps {
+                script {
+                    def listName = 'global.acmeSubdomain'
+                    def file = 'values.yaml'
+
+                    def exists = sh(script: "${tool 'yq'} e \".${listName}[] | select(.name == \\\"${params.NAME}\\\")\" ${file}", returnStdout: true).trim()
+
+                    if (exists) {
+                        if (params.HOST) {
+                            sh "${tool 'yq'} e -i \"(.${listName}[] | select(.name == \\\"${params.NAME}\\\") | .host) = \\\"${params.HOST}\\\"\" ${file}"
+                        }
+                        if (params.MESHPORT) {
+                            sh "${tool 'yq'} e -i \"(.${listName}[] | select(.name == \\\"${params.NAME}\\\") | .meshPort) = ${params.MESHPORT}\" ${file}"
+                        }
+                        echo "Запись с name='${params.NAME}' обновлена."
+                    } else {
+                        sh "${tool 'yq'} e -i \".${listName} += [{}]\" ${file}"
+                        def lastIndex = sh(script: "${tool 'yq'} e \".${listName} | length - 1\" ${file}", returnStdout: true).trim()
+                        sh "${tool 'yq'} e -i \"(.${listName}[${lastIndex}].name) = \\\"${params.NAME}\\\"\" ${file}"
+                        sh "${tool 'yq'} e -i \"(.${listName}[${lastIndex}].host) = \\\"${params.HOST}\\\"\" ${file}"
+                        sh "${tool 'yq'} e -i \"(.${listName}[${lastIndex}].meshPort) = ${params.MESHPORT}\" ${file}"
+                        echo "Новая запись с name='${params.NAME}' добавлена."
+                    }
+                }
+            }
+        }
+
+        stage('Git commit and push') {
+            steps {
+                script {
+                    sh """
+                        git config user.email "jenkins@example.com"
+                        git config user.name "Jenkins CI"
+                        git add values.yaml
+                        git commit -m "Обновление записи с name='${params.NAME}' в values.yaml" || echo "Nothing to commit"
+                        git push origin develop
+                    """
+                }
+            }
+        }
+    }
+}

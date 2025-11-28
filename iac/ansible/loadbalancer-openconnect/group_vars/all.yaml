@@ -1,0 +1,18 @@
+---
+
+dnsName: spongo.ru
+dnsIp: 91.149.218.39
+
+openconnect:
+  ipNetwork: 192.168.50.0
+  ipMask: 255.255.255.0
+  cn: SPONGO OC
+  organization: SPONGO INC
+  pam: true
+  dnsName: vpn.spongo.ru
+
+clientsRoutes:
+  - network: 15.15.15.0
+    prefix: 255.255.255.0
+  - network: 16.16.16.0
+    prefix: 255.255.255.0

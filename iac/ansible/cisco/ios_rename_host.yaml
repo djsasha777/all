@@ -1,0 +1,13 @@
+---
+- name: Change hostname
+  hosts: ACCESSES
+  gather_facts: false
+
+  tasks:
+    - name: configure top level configuration
+      ios_config:
+         lines: hostname {{ inventory_hostname }}
+
+    - name: save running to start-config when modified
+      ios_config:
+        save_when: modified

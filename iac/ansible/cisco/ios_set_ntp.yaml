@@ -1,0 +1,29 @@
+---
+- name: Set NTP Playbook
+  hosts: all
+  gather_facts: no
+  become: yes
+
+  tasks:
+    
+    - name: Configure Name Servers
+      cisco.ios.ios_system:
+        name_servers:
+          - 8.8.8.8
+          - 8.8.8.4
+        state: present
+
+    - name: Timezome and Timestamps
+      ios_config:
+        lines:
+          - clock timezone EST -5 0
+          - clock summer-time EDT recurring
+          - service timestamps debug datetime msec localtime show-timezone
+          - service timestamps log datetime msec localtime show-timezone
+          - ip default-gateway 10.76.1.254
+
+    - name: Set NTP Server
+      ios_ntp:
+        server: time.google.com
+        logging: false
+        state: present

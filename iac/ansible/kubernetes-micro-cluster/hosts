@@ -1,0 +1,20 @@
+[masters]
+master ansible_host=192.168.1.111 ansible_ssh_private_key_file=/home/djsasha777/newkey ansible_user=ubuntu     
+
+[workers]
+worker1 ansible_host=192.168.1.121 ansible_ssh_private_key_file=/home/djsasha777/newkey ansible_user=ubuntu
+worker2 ansible_host=192.168.1.122 ansible_ssh_private_key_file=/home/djsasha777/newkey ansible_user=ubuntu
+
+[storages]
+storage ansible_host=192.168.1.201 ansible_ssh_private_key_file=/home/djsasha777/newkey ansible_user=ubuntu
+
+[loadbalancers]
+loadbalancer ansible_host=192.168.1.71 ansible_ssh_private_key_file=/home/djsasha777/newkey ansible_user=ubuntu
+[loadbalancers:vars]
+zerotier_download_base_url=http://download.zerotier.com
+zerotier_deb_release_repo="{{ ansible_facts['distribution_release'] }}"
+zerotier_gpg_url=https://download.zerotier.com/contact@zerotier.com.gpg
+zerotier_gpg_fingerprint=74A5E9C458E1A431F1DA57A71657198823E52A61
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3

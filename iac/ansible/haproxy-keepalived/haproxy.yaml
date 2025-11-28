@@ -1,0 +1,40 @@
+---
+- hosts: "loadbalancer"
+  remote_user: root
+  gather_facts: yes
+  connection: ssh
+
+  tasks:
+  
+    - name: Ensure dependencies are installed
+      yum: name={{ item }} state=present
+      with_items:
+        - openssl-devel 
+        - pcre-devel
+        - make
+        - gcc
+        - socat
+        - haproxy
+      when: ansible_os_family == "RedHat"
+
+    - name: Ensure dependencies are installed
+      apt: name={{ item }} state=present
+      with_items:
+        - build-essential
+        - zlib1g-dev 
+        - libpcre3-dev
+        - libssl-dev
+        - socat
+        - haproxy
+      when: ansible_os_family == "Debian"
+
+    - name: Ensure haproxy conf is set
+      template: 
+        src: templates/haproxy.cfg.j2 
+        dest: /etc/haproxy/haproxy.cfg
+
+    - name: Ensure haproxy is started
+      service:  
+        name: haproxy
+        state: started
+        enabled: yes

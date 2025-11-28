@@ -1,0 +1,20 @@
+---
+- hosts: "kuberhost"
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+  
+  tasks:
+    - name: apt update
+      ansible.builtin.apt:
+        update_cache: yes
+    - name: install packages
+      ansible.builtin.apt:
+        name:
+          - nfs-common
+          - cifs-utils
+        state: present
+

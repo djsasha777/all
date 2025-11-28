@@ -1,0 +1,17 @@
+---
+- name: create loopback int on routers
+  hosts: CORES
+  become: yes
+  tasks:
+
+    - name: run create interface
+      cisco.ios.ios_interfaces:
+        config:
+          - name: Loopback0
+            description: my loop interface
+            enabled: true
+
+  handlers:
+    - name: save config
+      ios_command:
+        commands: wr
