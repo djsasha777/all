@@ -1,0 +1,22 @@
+name: loadbalancer-openconnect
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ansible/loadbalancer-openconnect/**
+
+  workflow_dispatch:
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run playbook
+        uses: dawidd6/action-ansible-playbook@v3
+        with:
+          playbook: openconnect.yaml
+          directory: ansible/loadbalancer-openconnect/
+          key: ${{ secrets.PRIVATE }}
+          options: |
+            --inventory hosts.yaml

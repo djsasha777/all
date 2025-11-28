@@ -1,0 +1,44 @@
+
+name: iotapp
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - iotapp/**
+
+  workflow_dispatch:
+
+jobs:
+
+  backbuild:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+        - name: Checkout
+          uses: actions/checkout@v2     
+        - name: Login to github registry
+          uses: docker/login-action@v2
+          with:
+            registry: ghcr.io
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+        - name: get build number
+          uses: benjlevesque/short-sha@v1.2
+          id: short-sha
+          with:
+           length: 7
+        - name: Get git commit data
+          uses: rlespinasse/git-commit-data-action@v1           
+        - name : build docker image and push
+          uses: docker/build-push-action@v3
+          with:
+            context: iotapp/
+            file: iotapp/Dockerfile
+            push: true
+            tags: |
+              ghcr.io/${{ github.repository }}/${{ github.workflow }}/iotbackend:${{ steps.short-sha.outputs.sha }}             
+
+
