@@ -1,6 +1,6 @@
 #!/bin/sh
-git clone https://github.com/djsasha777/hardware.git
-cp -rf hardware/OPENWRT/nginx/* /etc/nginx/
+git clone https://git.spongo.ru/all.git
+cp -rf all/iac/openwrt/bpi-r3-mini/nginx/* /etc/nginx/
 mv /etc/nginx/nginx-allconf.sh /root/run.sh
 rm -rf hardware
 chmod +x /root/run.sh

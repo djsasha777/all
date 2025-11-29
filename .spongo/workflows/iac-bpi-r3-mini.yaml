@@ -1,0 +1,22 @@
+name: bpi-r3-mini
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - iac/openwrt/bpi-r3-mini/**
+
+  workflow_dispatch:
+jobs:
+  provision:
+    runs-on: localhost
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run remote echo command via SSH
+        uses: D3rHase/ssh-command-action@latest
+        with:
+          host: ${{ secrets.HOST }}
+          port: ${{ secrets.PORT }}
+          user: ${{ secrets.USER }}
+          private_key: ${{ secrets.PRIVATE_KEY }}
+          host_fingerprint: ${{ secrets.HOST_FINGERPRINT }}
+          command: bash iac/openwrt/bpi-r3-mini/scripts/nginx-allconf.sh
