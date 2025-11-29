@@ -12,25 +12,13 @@ acmeSubdomain:
   name: webdaw
   port: 9090
 - ip: 192.168.49.2
+  name: git
+  port: 9090
+- ip: 192.168.49.2
   name: player
   port: 9090
 - ip: 12.12.12.0
   name: argo
-  port: 80
-- ip: 12.12.12.1
-  name: gitea
-  port: 80
-- ip: 12.12.12.1
-  name: vault
-  port: 80
-- ip: 12.12.12.1
-  name: nexus
-  port: 80
-- ip: 12.12.12.1
-  name: n8n
-  port: 80
-- ip: 12.12.12.1
-  name: rocketchat
   port: 80
 dnsIp: 91.149.218.39
 dnsName: spongo.ru
@@ -58,21 +46,25 @@ haproxySubdomain:
   name: argo
   port: 443
   proxy: false
-- ip: 12.12.12.1
-  name: gitea
-  port: 443
-  proxy: false
-- ip: 12.12.12.1
-  name: vault
-  port: 443
-  proxy: false
-- ip: 12.12.12.1
-  name: nexus
-  port: 443
-  proxy: false
 - ip: 192.168.49.2
   name: webdaw
   port: 8088
+  proxy: false
+- ip: 192.168.49.2
+  name: git
+  port: 8038
+  proxy: false
+- ip: 192.168.49.2
+  name: sshbpi3mini
+  port: 22
+  proxy: false
+- ip: 192.168.49.2
+  name: router
+  port: 443
+  proxy: false
+- ip: 192.168.49.2
+  name: proxmox
+  port: 8029
   proxy: false
 - ip: 192.168.49.2
   name: player
@@ -81,12 +73,4 @@ haproxySubdomain:
 - ip: 192.168.49.2
   name: home
   port: 8899
-  proxy: false
-- ip: 12.12.12.1
-  name: n8n
-  port: 443
-  proxy: false
-- ip: 12.12.12.1
-  name: rocketchat
-  port: 443
   proxy: false
