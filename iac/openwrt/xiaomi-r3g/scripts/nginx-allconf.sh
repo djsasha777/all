@@ -1,6 +1,6 @@
 #!/bin/sh
 git clone https://git.spongo.ru/all.git
-cp -rf all/iac/openwrt/bpi-r3-mini/nginx/* /etc/nginx/
+cp -rf all/iac/openwrt/xiaomi-r3g/nginx/* /etc/nginx/
 mv /etc/nginx/nginx-allconf.sh /root/run.sh
 rm -rf hardware
 chmod +x /root/run.sh
