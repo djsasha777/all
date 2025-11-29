@@ -12,9 +12,6 @@ acmeSubdomain:
   name: webdaw
   port: 9090
 - ip: 192.168.49.2
-  name: git
-  port: 9090
-- ip: 192.168.49.2
   name: player
   port: 9090
 - ip: 12.12.12.0
@@ -61,6 +58,10 @@ haproxySubdomain:
 - ip: 192.168.49.2
   name: router
   port: 443
+  proxy: false
+- ip: 192.168.49.2
+  name: rsync
+  port: 873
   proxy: false
 - ip: 192.168.49.2
   name: proxmox
