@@ -1,0 +1,26 @@
+name: watcher
+on:
+  push:
+    tags:
+      - "*.*.*"
+    branches: [ "master" ]
+    paths:
+      - ci/watcher/**
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - ci/watcher/**
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-cloud-runner
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to Registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: Kaniko build and push
+        run: |
+          /kaniko/executor --context=. --dockerfile=./ci/watcher/Dockerfile --destination=djsasha777/watcher:latest --skip-tls-verify
