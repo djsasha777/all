@@ -1,0 +1,22 @@
+[Unit]
+Description=Spongo CI/CD Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=git
+Group=git
+WorkingDirectory=/opt/spongo
+EnvironmentFile=/etc/spongo/cicd.conf
+ExecStart=/opt/spongo/spongo-hook monitor
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+
+# Логи
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=spongo
+
+[Install]
+WantedBy=multi-user.target
