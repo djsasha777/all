@@ -1,0 +1,65 @@
+---
+all:
+  hosts:
+    node1:
+      ansible_host: 192.168.1.10
+      ansible_user: ubuntu
+      ansible_ssh_private_key_file: ~/.ssh/id_rsa
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    node2:
+      ansible_host: 192.168.1.11
+      ansible_user: ubuntu
+      ansible_ssh_private_key_file: ~/.ssh/id_rsa
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    node3:
+      ansible_host: 192.168.1.12
+      ansible_user: ubuntu
+      ansible_ssh_private_key_file: ~/.ssh/id_rsa
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  vars:
+    # Глобальные переменные для всех хостов
+    ansible_python_interpreter: /usr/bin/python3
+    kubernetes_version: "1.32.0-1.1"
+    cilium_version: "1.17.4"
+    pod_cidr: "10.244.0.0/16"
+    cluster_name: "cilium-cluster"
+    kube_vip_version: "0.8.1"
+    kube_vip_interface: "eth0"
+    
+    # Containerd настройки
+    containerd_version: "1.7.24"
+    containerd_config: |
+      version = "2"
+      root = "/var/lib/containerd"
+      state = "/run/containerd"
+      plugin_dir = "/usr/lib/containerd"
+      
+      [plugins."io.containerd.grpc.v1.cri"]
+        sandbox_image = "registry.k8s.io/pause:3.10"
+        enable_selinux = false
+        
+      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+        runtime_type = "io.containerd.runc.v2"
+        
+      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+        SystemdCgroup = true
+      
+      [plugins."io.containerd.grpc.v1.cri".registry]
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+            endpoint = ["https://registry.docker-cn.com"]
+      
+      [plugins."io.containerd.service.v1.task-manager"]
+        task_manager_config_path = "/etc/containerd/task-manager.json"
+
+  children:
+    kube-master:
+      hosts:
+        node1:
+        node2:
+        node3:
+    kube-node:
+      hosts:
+        node1:
+        node2:
+        node3:
