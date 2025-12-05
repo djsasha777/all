@@ -5,11 +5,11 @@ on:
       - "*.*.*"
     branches: [ "main" ]
     paths:
-      - watcher/**
+      - ci/python/watcher/**
   pull_request:
     branches: [ "main" ]
     paths:
-      - watcher/**
+      - ci/python/watcher/**
   workflow_dispatch:
 
 jobs:
@@ -36,6 +36,6 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: watcher/Dockerfile
+          file: ci/python/watcher/Dockerfile
           push: true
           tags: ${{ steps.metawatcher.outputs.tags }}

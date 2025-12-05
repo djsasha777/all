@@ -5,7 +5,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - iotapp/**
+      - ci/python/iotapp/**
 
   workflow_dispatch:
 
@@ -35,8 +35,8 @@ jobs:
         - name : build docker image and push
           uses: docker/build-push-action@v3
           with:
-            context: iotapp/
-            file: iotapp/Dockerfile
+            context: .
+            file: ci/python/iotapp/Dockerfile
             push: true
             tags: |
               ghcr.io/${{ github.repository }}/${{ github.workflow }}/iotbackend:${{ steps.short-sha.outputs.sha }}             
