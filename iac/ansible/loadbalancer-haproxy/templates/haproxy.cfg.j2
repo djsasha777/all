@@ -72,3 +72,17 @@ backend main
  server {{ host.name }} {{ host.ip }}:{{ host.port }} {% if host.proxy == true %} send-proxy-v2 {% endif %}
 
 {% endfor %}
+
+#STAIGHT FARWARDER
+
+{% for proxy in straightProxy %}
+
+frontend {{ proxy.name }}
+ bind {{ dnsIp }}:{{ proxy.extPort }}
+ default_backend {{ proxy.name }}
+
+backend {{ proxy.name }}
+ balance roundrobin
+ server {{ proxy.name }} {{ proxy.intIp }}:{{ proxy.intPort }} check
+
+{% endfor %}

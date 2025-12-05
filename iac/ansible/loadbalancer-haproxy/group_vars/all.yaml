@@ -48,20 +48,8 @@ haproxySubdomain:
   port: 8088
   proxy: false
 - ip: 192.168.49.2
-  name: git
-  port: 8038
-  proxy: false
-- ip: 192.168.49.2
-  name: sshbpi3mini
-  port: 22
-  proxy: false
-- ip: 192.168.49.2
   name: router
   port: 443
-  proxy: false
-- ip: 192.168.49.2
-  name: rsync
-  port: 873
   proxy: false
 - ip: 192.168.49.2
   name: proxmox
@@ -75,3 +63,12 @@ haproxySubdomain:
   name: home
   port: 8899
   proxy: false
+straightProxy:
+- name: sshbpi3mini
+  extPort: 4090
+  intPort: 22
+  intIp: 192.168.49.2
+- name: rsync
+  extPort: 8873
+  intPort: 873
+  intIp: 192.168.49.2
