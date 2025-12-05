@@ -1,3 +1,0 @@
-[LB] 
-haproxy1 ansible_ssh_host=192.168.1.221 ansible_ssh_port=22 ansible_ssh_user=root keepalived_priority=100
-haproxy2 ansible_ssh_host=192.168.1.222 ansible_ssh_port=22 ansible_ssh_user=root keepalived_priority=101
