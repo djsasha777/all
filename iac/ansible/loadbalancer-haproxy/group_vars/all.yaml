@@ -68,7 +68,11 @@ straightProxy:
   extPort: 4090
   intPort: 22
   intIp: 192.168.49.2
-- name: rsync
+- name: sshr3g
+  extPort: 4091
+  intPort: 22
+  intIp: 192.168.49.5
+- name: rsyncbpi3mini
   extPort: 8873
   intPort: 873
   intIp: 192.168.49.2
