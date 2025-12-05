@@ -3,7 +3,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - ansible/loadbalancer-openconnect/**
+      - iac/ansible/loadbalancer-openconnect/**
 
   workflow_dispatch:
 jobs:
@@ -16,7 +16,7 @@ jobs:
         uses: dawidd6/action-ansible-playbook@v3
         with:
           playbook: openconnect.yaml
-          directory: ansible/loadbalancer-openconnect/
+          directory: iac/ansible/loadbalancer-openconnect/
           key: ${{ secrets.PRIVATE }}
           options: |
             --inventory hosts.yaml

@@ -3,7 +3,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - ansible/loadbalancer-shadowsocks/**
+      - iac/ansible/loadbalancer-shadowsocks/**
 
   workflow_dispatch:
 jobs:
@@ -16,7 +16,7 @@ jobs:
         uses: dawidd6/action-ansible-playbook@v3
         with:
           playbook: shadowsocks.yaml
-          directory: ansible/loadbalancer-shadowsocks/
+          directory: iac/ansible/loadbalancer-shadowsocks/
           key: ${{ secrets.PRIVATE }}
           options: |
             --inventory hosts.yaml

@@ -3,7 +3,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - ansible/loadbalancer-nebula/**
+      - iac/ansible/loadbalancer-nebula/**
 
   workflow_dispatch:
 jobs:
@@ -16,7 +16,7 @@ jobs:
         uses: dawidd6/action-ansible-playbook@v3
         with:
           playbook: nebula.yaml
-          directory: ansible/loadbalancer-nebula/
+          directory: iac/ansible/loadbalancer-nebula/
           key: ${{ secrets.PRIVATE }}
           options: |
             --inventory hosts.yaml

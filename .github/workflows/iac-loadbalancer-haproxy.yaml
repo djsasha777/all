@@ -3,7 +3,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - ansible/loadbalancer-haproxy/**
+      - iac/ansible/loadbalancer-haproxy/**
 
   workflow_dispatch:
 jobs:
@@ -16,7 +16,7 @@ jobs:
         uses: dawidd6/action-ansible-playbook@v3
         with:
           playbook: haproxy.yaml
-          directory: ansible/loadbalancer-haproxy/
+          directory: iac/ansible/loadbalancer-haproxy/
           key: ${{ secrets.PRIVATE }}
           options: |
             --inventory hosts.yaml
