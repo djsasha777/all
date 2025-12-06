@@ -7,8 +7,8 @@ ENV TOKEN=""
 ENV EXTERNAL=""
 
 WORKDIR /app
-COPY watcher/main.py /app/main.py
-COPY watcher/requirements.txt /app/
+COPY ci/python/watcher/main.py /app/main.py
+COPY ci/python/watcher/requirements.txt /app/
 
 EXPOSE 8088
 
