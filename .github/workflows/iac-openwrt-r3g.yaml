@@ -4,7 +4,6 @@ on:
     branches: [ "main" ]
     paths:
       - iac/openwrt/xiaomi-r3g/**
-
   workflow_dispatch:
 jobs:
   provision:
@@ -14,8 +13,8 @@ jobs:
       - name: Execute remote SSH commands using password
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT }}
+          host: 192.168.49.5
+          username: ${{ secrets.R3GUSERNAME }}
+          password: ${{ secrets.R3GPASSWORD }}
+          port: 4091
           script_path: iac/openwrt/xiaomi-r3g/scripts/nginx-allconf.sh
