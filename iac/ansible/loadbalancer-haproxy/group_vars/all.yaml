@@ -9,6 +9,9 @@ acmeSubdomain:
   name: home
   port: 9090
 - ip: 192.168.49.2
+  name: git
+  port: 9090
+- ip: 192.168.49.2
   name: webdaw
   port: 9090
 - ip: 192.168.49.2
@@ -63,8 +66,12 @@ haproxySubdomain:
   name: home
   port: 8899
   proxy: false
+- ip: 192.168.49.2
+  name: git
+  port: 8797
+  proxy: false
 straightProxy:
-- name: sshbpi3mini
+- name: sshr3m
   extPort: 4090
   intPort: 22
   intIp: 192.168.49.2
@@ -72,7 +79,7 @@ straightProxy:
   extPort: 4091
   intPort: 22
   intIp: 192.168.49.5
-- name: rsyncbpi3mini
+- name: rsynr3m
   extPort: 8873
   intPort: 873
   intIp: 192.168.49.2
