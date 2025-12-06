@@ -1,4 +1,4 @@
-name: openwrt-bpi-r3-mini-nginx
+name: openwrt-r3g-nginx
 on:
   push:
     branches: [ "main" ]
