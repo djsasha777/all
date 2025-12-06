@@ -1,7 +1,7 @@
 #!/bin/sh
 git clone https://github.com/djsasha777/all.git
 cp -rf all/iac/openwrt/xiaomi-r3g/nginx/* /etc/nginx/
-mv /etc/nginx/nginx-allconf.sh /root/run.sh
+mv all/iac/openwrt/bpi-r3-mini/scripts/nginx-allconf.sh /root/run.sh
 rm -rf hardware
 chmod +x /root/run.sh
 chmod 644 -R /etc/nginx
