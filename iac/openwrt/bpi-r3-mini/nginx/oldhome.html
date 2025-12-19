@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SMARTHOME</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column; /* Изменение направления расположения элементов */
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #fff;
+    }
+    button {
+      display: block;
+      width: 80vw; /* Ширину задаем относительно ширины экрана */
+      max-width: 300px; /* Ограничиваем максимальную ширину */
+      padding: 15px;
+      font-size: 1.5em;
+      background-color: #5e9ca0;
+      color: white;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #2e6c80;
+    }
+    div#responseDiv, div#responseDiv2 {
+      text-align: center;
+      font-size: 1.2em;
+      color: #5e9ca0;
+    }
+  </style>
+  <script>
+    // Встроенный манифест как JS объект
+    const manifest = {
+      name: "SPONGO HOME",
+      short_name: "SPONGO",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#fff",
+      theme_color: "#5e9ca0",
+      description: "SPONGO HOME PWA",
+      icons: [
+        { src: "icon-192.png", sizes: "192x192", type: "image/png" },
+        { src: "icon-512.png", sizes: "512x512", type: "image/png" }
+      ]
+    };
+
+    // Внедрение манифеста в <head>
+    function injectManifest() {
+      const stringManifest = JSON.stringify(manifest);
+      const blob = new Blob([stringManifest], { type: "application/json" });
+      const manifestURL = URL.createObjectURL(blob);
+      const linkElem = document.createElement("link");
+      linkElem.rel = "manifest";
+      linkElem.href = manifestURL;
+      document.head.appendChild(linkElem);
+    }
+
+    // Встроенный Service Worker код
+    const swCode = `
+      self.addEventListener('install', event => {
+        event.waitUntil(
+          caches.open('spongo-cache-v1').then(cache => {
+            return cache.addAll([
+              '/',
+            ]);
+          })
+        );
+      });
+
+      self.addEventListener('fetch', event => {
+        event.respondWith(
+          caches.match(event.request).then(response => {
+            return response || fetch(event.request);
+          })
+        );
+      });
+    `;
+
+    // Регистрация Service Worker через Blob URL
+    function registerServiceWorker() {
+      if ('serviceWorker' in navigator) {
+        const blob = new Blob([swCode], { type: "application/javascript" });
+        const swURL = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swURL)
+          .then(() => console.log('Service Worker registered from blob'))
+          .catch(err => console.error('Service Worker registration failed:', err));
+      }
+    }
+
+    window.addEventListener('load', () => {
+      injectManifest();
+      registerServiceWorker();
+    });
+  </script>
+</head>
+<body>
+  <ul style="list-style-type: none; padding: 0;">
+    <li>
+      <button id="serverON">SERVER ON</button>
+      <div id="responseDiv1"></div>
+    </li>
+    <li>
+      <button id="serverLONG">SERVER LONG</button>
+      <div id="responseDiv2"></div>
+    </li>
+    <li>
+      <button id="server1_ON">SERVER1 ON</button>
+      <div id="responseDiv3"></div>
+    </li>
+    <li>
+      <button id="server1_OFF">SERVER1 OFF</button>
+      <div id="responseDiv4"></div>
+    </li>
+    <li>
+      <button id="server2_ON">SERVER2 ON</button>
+      <div id="responseDiv5"></div>
+    </li>
+    <li>
+      <button id="server2_OFF">SERVER2 OFF</button>
+      <div id="responseDiv6"></div>
+    </li>
+    <li>
+      <button id="server3_ON">SERVER3 ON</button>
+      <div id="responseDiv7"></div>
+    </li>
+    <li>
+      <button id="server3_OFF">SERVER3 OFF</button>
+      <div id="responseDiv8"></div>
+    </li>
+  </ul>
+
+  <script>
+    function makeButtonHandler(buttonID, endpoint, responseDivID, successMessage) {
+      return async () => {
+        try {
+          const response = await fetch(endpoint);
+          if (!response.ok) throw new Error(`Ошибка HTTP ${response.status}`);
+          await response.text(); // result unused
+          document.getElementById(responseDivID).innerText = successMessage;
+        } catch(error) {
+          console.error('Ошибка:', error);
+          document.getElementById(responseDivID).innerText = `Ошибка: ${error.message}`;
+        }
+      };
+    }
+
+    document.getElementById("serverON").addEventListener("click", makeButtonHandler("serverON", "https://home.spongo.ru/on", "responseDiv1", "SERVER ON"));
+    document.getElementById("serverLONG").addEventListener("click", makeButtonHandler("serverLONG", "https://home.spongo.ru/long", "responseDiv2", "SERVER LONG"));
+    document.getElementById("server1_ON").addEventListener("click", makeButtonHandler("server1_ON", "https://home.spongo.ru/1on", "responseDiv3", "SERVER1 ON"));
+    document.getElementById("server1_OFF").addEventListener("click", makeButtonHandler("server1_OFF", "https://home.spongo.ru/1off", "responseDiv4", "SERVER1 OFF"));
+    document.getElementById("server2_ON").addEventListener("click", makeButtonHandler("server2_ON", "https://home.spongo.ru/2on", "responseDiv5", "SERVER2 ON"));
+    document.getElementById("server2_OFF").addEventListener("click", makeButtonHandler("server2_OFF", "https://home.spongo.ru/2off", "responseDiv6", "SERVER2 OFF"));
+    document.getElementById("server3_ON").addEventListener("click", makeButtonHandler("server3_ON", "https://home.spongo.ru/3on", "responseDiv7", "SERVER3 ON"));
+    document.getElementById("server3_OFF").addEventListener("click", makeButtonHandler("server3_OFF", "https://home.spongo.ru/3off", "responseDiv8", "SERVER3 OFF"));
+  </script>
+</body>
+</html>
