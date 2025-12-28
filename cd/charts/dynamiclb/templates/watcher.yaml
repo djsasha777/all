@@ -18,6 +18,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: watcher
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": hook-succeeded
 spec:
   replicas: 1
   selector:
