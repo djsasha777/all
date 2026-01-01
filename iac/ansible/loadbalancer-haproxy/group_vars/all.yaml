@@ -40,10 +40,6 @@ haproxySubdomain:
   port: 9389
   proxy: false
 - ip: 192.168.49.2
-  name: router
-  port: 443
-  proxy: false
-- ip: 192.168.49.2
   name: player
   port: 8000
   proxy: false
