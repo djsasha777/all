@@ -1,9 +1,9 @@
-name: openwrt-xiaomi-r3g-nginx
+name: openwrt-bpi-r3m-nginx
 on:
   push:
     branches: [ "main" ]
     paths:
-      - iac/openwrt/xiaomi-r3g/**
+      - iac/openwrt/bpi-r3-mini/**
   workflow_dispatch:
 jobs:
   provision:
@@ -13,8 +13,8 @@ jobs:
       - name: Execute remote SSH commands using password
         uses: appleboy/ssh-action@v1
         with:
-          host: 192.168.49.5
-          username: ${{ secrets.R3GUSERNAME }}
-          password: ${{ secrets.R3GPASSWORD }}
+          host: 192.168.49.2
+          username: ${{ secrets.R3MUSERNAME }}
+          password: ${{ secrets.R3MPASSWORD }}
           port: 22
-          script_path: iac/openwrt/xiaomi-r3g/scripts/nginx-allconf.sh
+          script_path: iac/openwrt/bpi-r3-mini/scripts/nginx-allconf.sh
