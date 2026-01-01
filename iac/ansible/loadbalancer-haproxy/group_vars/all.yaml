@@ -17,9 +17,9 @@ acmeSubdomain:
 - ip: 192.168.49.2
   name: player
   port: 9090
-- ip: 12.12.12.0
-  name: argo
-  port: 80
+- ip: 192.168.49.2
+  name: browser
+  port: 9090
 dnsIp: 91.149.218.39
 dnsName: spongo.ru
 haproxyRoot:
@@ -69,6 +69,10 @@ haproxySubdomain:
 - ip: 192.168.49.2
   name: git
   port: 8797
+  proxy: false
+- ip: 192.168.49.2
+  name: browser
+  port: 9797
   proxy: false
 straightProxy:
 - name: sshr3m
