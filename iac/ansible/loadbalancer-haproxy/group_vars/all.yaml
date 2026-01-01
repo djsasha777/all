@@ -42,10 +42,6 @@ haproxySubdomain:
   name: shadowsocks
   port: 9389
   proxy: false
-- ip: 12.12.12.0
-  name: argo
-  port: 443
-  proxy: false
 - ip: 192.168.49.2
   name: webdaw
   port: 8088
@@ -53,10 +49,6 @@ haproxySubdomain:
 - ip: 192.168.49.2
   name: router
   port: 443
-  proxy: false
-- ip: 192.168.49.2
-  name: proxmox
-  port: 8029
   proxy: false
 - ip: 192.168.49.2
   name: player
@@ -75,15 +67,11 @@ haproxySubdomain:
   port: 9797
   proxy: false
 straightProxy:
-- name: sshr3m
-  extPort: 4090
-  intPort: 22
-  intIp: 192.168.49.2
-- name: sshr3g
-  extPort: 4091
-  intPort: 22
-  intIp: 192.168.49.5
-- name: rsynr3m
-  extPort: 8873
-  intPort: 873
-  intIp: 192.168.49.2
+# - name: sshr3m
+#   extPort: 4090
+#   intPort: 22
+#   intIp: 192.168.49.2
+# - name: sshr3g
+#   extPort: 4091
+#   intPort: 22
+#   intIp: 192.168.49.5
