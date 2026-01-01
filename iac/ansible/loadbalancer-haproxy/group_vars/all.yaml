@@ -66,7 +66,7 @@ haproxySubdomain:
   name: browser
   port: 9797
   proxy: false
-straightProxy:
+# straightProxy:
 # - name: sshr3m
 #   extPort: 4090
 #   intPort: 22
