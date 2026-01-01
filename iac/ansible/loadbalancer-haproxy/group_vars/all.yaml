@@ -66,11 +66,11 @@ haproxySubdomain:
   name: browser
   port: 9797
   proxy: false
-# straightProxy:
-# - name: sshr3m
-#   extPort: 4090
-#   intPort: 22
-#   intIp: 192.168.49.2
+straightProxy:
+- name: test
+  extPort: 4090
+  intPort: 2222
+  intIp: 1.1.0.1
 # - name: sshr3g
 #   extPort: 4091
 #   intPort: 22

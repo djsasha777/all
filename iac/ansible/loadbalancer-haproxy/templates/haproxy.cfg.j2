@@ -75,14 +75,14 @@ backend main
 
 #STAIGHT FARWARDER
 
-#{% for proxy in straightProxy %}
+{% for proxy in straightProxy %}
 
-#frontend {{ proxy.name }}
-# bind {{ dnsIp }}:{{ proxy.extPort }}
-# default_backend {{ proxy.name }}
+frontend {{ proxy.name }}
+ bind {{ dnsIp }}:{{ proxy.extPort }}
+ default_backend {{ proxy.name }}
 
-#backend {{ proxy.name }}
-# balance roundrobin
-# server {{ proxy.name }} {{ proxy.intIp }}:{{ proxy.intPort }} check
+backend {{ proxy.name }}
+ balance roundrobin
+ server {{ proxy.name }} {{ proxy.intIp }}:{{ proxy.intPort }} check
 
-#{% endfor %}
+{% endfor %}
