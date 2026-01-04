@@ -1,0 +1,11 @@
+repositories:
+  - name: local
+    url: https://github.com/djsasha777/all.git  # Git repo как источник, если packaged не доступен
+
+releases:
+  - name: dynamiclb
+    namespace: default  # Измените на нужный namespace
+    chart: cd/charts/dynamiclb  # Путь к чарту в git repo
+    values:
+      - values.yaml  # Локальный файл с overrides, создайте по необходимости
+    set: []  # Дополнительные set значения, если нужны

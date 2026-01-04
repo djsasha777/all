@@ -1,0 +1,46 @@
+name: Deploy DynamicLB Helmfile
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'cd/charts/dynamiclb/**'
+  workflow_dispatch:
+
+env:
+  HELMFILE_VERSION: v0.169.0
+  KUBECONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64 }}
+
+jobs:
+  deploy:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout
+      uses: taiki-e/checkout-action@v1
+    - name: Decode Kubeconfig
+      env:
+        KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG_BASE64 }}
+      run: |
+        mkdir -p ~/.kube
+        echo "${KUBECONFIG_CONTENT}" | base64 -d > ~/.kube/config
+        chmod 600 ~/.kube/config
+
+    - name: Verify cluster access
+      run: kubectl get nodes
+
+    - name: Lint Helmfile
+      run: helmfile lint
+
+    - name: Template Helmfile (dry-run)
+      run: helmfile template --debug
+
+    - name: Deploy with Helmfile
+      working-directory: cd/helmfiles
+      run: helmfile -f dynamiclb.yaml apply
+      env:
+        HELMFILE_HELM_DEFAULT_COMMAND_TIMEOUT: 5m0s
+
+    - name: Verify deployment
+      run: |
+        kubectl rollout status deployment/dynamiclb -n default --timeout=300s || true
+        kubectl get all -n default
