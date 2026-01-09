@@ -1,0 +1,16 @@
+name: openwrt-bpi-r3m-certs-renew
+on:
+  workflow_dispatch:
+jobs:
+  provision:
+    runs-on: macos-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - name: Execute remote SSH commands using password
+        uses: appleboy/ssh-action@v1
+        with:
+          host: 192.168.49.2
+          username: ${{ secrets.R3MUSERNAME }}
+          password: ${{ secrets.R3MPASSWORD }}
+          port: 22
+          script_path: iac/openwrt/bpi-r3-mini/scripts/renew-certs.sh
