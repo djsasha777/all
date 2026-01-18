@@ -2,108 +2,110 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>VISUAL</title>
+    <title>Галерея</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            background: #000; 
-            padding: 10px; 
+            margin: 0; 
+            padding: 15px; 
+            background: #111; 
             font-family: Arial, sans-serif;
         }
         #gallery {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(4, 1fr);  /* ✅ 4 РЯДА */
+            gap: 12px;
+            max-width: 1400px;  /* ограничение ширины */
+            margin: 0 auto;
         }
         img {
             width: 100%; 
-            height: 150px; 
+            height: 220px;     /* ✅ БОЛЬШЕ размер */
             object-fit: cover; 
             cursor: pointer;
-            border-radius: 8px;
-            transition: transform 0.3s;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
         }
-        img:hover { transform: scale(1.05); }
+        img:hover { 
+            transform: scale(1.05); 
+            border-color: #4a90e2;
+            z-index: 10;
+        }
         #modal {
             display: none;
             position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.95);
+            inset: 0;
+            background: rgba(0,0,0,0.98);
             z-index: 999;
+            padding: 20px;
         }
         #modal img {
-            max-width: 95vw;
-            max-height: 95vh;
+            max-width: 95vw;      /* ✅ ПОЛНЫЙ ЭКРАН */
+            max-height: 95vh;     /* ✅ ПОЛНЫЙ ЭКРАН */
+            width: auto;
+            height: auto;
             position: absolute;
-            top: 50%; left: 50%;
+            top: 50%; 
+            left: 50%;
             transform: translate(-50%, -50%);
+            border-radius: 8px;
+            box-shadow: 0 0 50px rgba(255,255,255,0.1);
+        }
+        @media (max-width: 1200px) {
+            #gallery { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 900px) {
+            #gallery { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            #gallery { grid-template-columns: 1fr; }
+            img { height: 250px; }
         }
     </style>
 </head>
 <body>
     <div id="gallery"></div>
-    <div id="modal">
-        <img id="modal-img">
-    </div>
+    <div id="modal"><img id="modal-img"></div>
 
     <script>
         const BASE_PATH = '/mnt/nvme0n1/nfs/VISUAL';
-        const gallery = document.getElementById('gallery');
-        const modal = document.getElementById('modal');
-        const modalImg = document.getElementById('modal-img');
-
+        
         async function init() {
+            const gallery = document.getElementById('gallery');
+            const modal = document.getElementById('modal');
+            const modalImg = document.getElementById('modal-img');
+            
             try {
-                const files = await fetchFiles();
-                console.log('Найдено файлов:', files.length);
-                render(files);
+                const res = await fetch(`${BASE_PATH}/`);
+                const html = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                const images = Array.from(doc.querySelectorAll('a[href]'))
+                    .map(a => a.getAttribute('href'))
+                    .filter(href => href.match(/\.(jpe?g|png|gif|webp)$/i))
+                    .map(href => `${BASE_PATH}/${href}`);
+                
+                console.log('Найдено:', images.length);
+                
+                gallery.innerHTML = images.map(src => 
+                    `<img src="${src}?t=${Date.now()}" 
+                          onclick="openModal('${src}')">`
+                ).join('');
+                
             } catch(e) {
-                console.error(e);
-                gallery.innerHTML = '<div style="color:white;padding:20px;">Ошибка загрузки</div>';
+                gallery.innerHTML = '<div style="grid-column:1/-1;color:#fff;padding:40px;text-align:center;font-size:18px;">Ошибка загрузки: ' + e.message + '</div>';
             }
         }
-
-        async function fetchFiles() {
-            const res = await fetch(`${BASE_PATH}/`);
-            const html = await res.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            return Array.from(doc.querySelectorAll('a[href]'))
-                .map(a => a.href.split('/').pop())
-                .filter(name => name.match(/\.(jpe?g|png|gif|webp)$/i))
-                .map(name => `${BASE_PATH}/${name}`);
-        }
-
-        function render(images) {
-            gallery.innerHTML = '';
-            images.forEach(src => {
-                const img = document.createElement('img');
-                img.src = src + '?t=' + Date.now(); // кэш-буст
-                img.onclick = () => openModal(src);
-                img.onerror = () => img.style.display = 'none';
-                gallery.appendChild(img);
-            });
-        }
-
+        
         function openModal(src) {
+            const modal = document.getElementById('modal');
+            const modalImg = document.getElementById('modal-img');
             modal.style.display = 'block';
             modalImg.src = src;
             document.body.style.overflow = 'hidden';
         }
-
-        modal.onclick = () => {
-            modal.style.display = 'none';
-            document.body.style.overflow = '';
-        };
-
-        // ESC
-        document.onkeydown = e => {
-            if (e.key === 'Escape') modal.style.display = 'none';
-        };
-
-        init();
-    </script>
-</body>
-</html>
+        
+        // Закрытие модалки
+        document.getElementById('modal').onclick = (e) 
