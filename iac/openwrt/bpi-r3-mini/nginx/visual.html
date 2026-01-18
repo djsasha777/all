@@ -1,155 +1,109 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📸 Фото Галерея</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Галерея</title>
     <style>
-        /* Стили те же, что были раньше - копируйте из предыдущего файла */
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: white; }
-        .container { max-width: 1400px; margin: 0 auto; }
-        h1 { text-align: center; font-size: 2.5em; margin-bottom: 10px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        .stats { text-align: center; margin-bottom: 30px; opacity: 0.9; }
-        #gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; padding-bottom: 40px; }
-        .thumbnail { background: rgba(255,255,255,0.95); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3); cursor: pointer; transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); position: relative; color: #333; }
-        .thumbnail:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        .thumbnail img { width: 100%; height: 180px; object-fit: cover; transition: transform 0.4s; }
-        .thumbnail:hover img { transform: scale(1.1); }
-        .caption { padding: 15px; position: relative; }
-        .caption h3 { margin: 0 0 5px 0; font-size: 1.1em; font-weight: 600; }
-        .source { font-size: 0.85em; opacity: 0.8; margin: 0; }
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
-        #modal img { max-width: 95%; max-height: 95%; border-radius: 12px; box-shadow: 0 0 60px rgba(255,255,255,0.1); }
-        #closeModal { position: absolute; top: 30px; right: 40px; color: white; font-size: 48px; cursor: pointer; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.3s; }
-        #closeModal:hover { background: rgba(255,255,255,0.2); }
-        #loading { text-align: center; padding: 60px 20px; font-size: 1.2em; }
-        .spinner { border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .refresh-btn { position: fixed; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 24px; cursor: pointer; color: white; backdrop-filter: blur(10px); transition: all 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-        .refresh-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #000; 
+            padding: 10px; 
+            font-family: Arial, sans-serif;
+        }
+        #gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        img {
+            width: 100%; 
+            height: 150px; 
+            object-fit: cover; 
+            cursor: pointer;
+            border-radius: 8px;
+            transition: transform 0.3s;
+        }
+        img:hover { transform: scale(1.05); }
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.95);
+            z-index: 999;
+        }
+        #modal img {
+            max-width: 95vw;
+            max-height: 95vh;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
     </style>
 </head>
 <body>
-    <button class="refresh-btn" onclick="loadGallery()" title="Обновить">↻</button>
-    
-    <div class="container">
-        <h1>📸 Фото Галерея</h1>
-        <div class="stats" id="stats"></div>
-        
-        <div id="loading">
-            <div class="spinner"></div>
-            Загружаем фотографии...
-        </div>
-        <div id="gallery"></div>
-    </div>
-
+    <div id="gallery"></div>
     <div id="modal">
-        <span id="closeModal">×</span>
-        <img id="modalImage" src="" alt="">
+        <img id="modal-img">
     </div>
 
     <script>
         const BASE_PATH = '/mnt/nvme0n1/nfs/VISUAL';
         const gallery = document.getElementById('gallery');
-        const loading = document.getElementById('loading');
-        const stats = document.getElementById('stats');
         const modal = document.getElementById('modal');
-        const modalImage = document.getElementById('modalImage');
-        const closeModal = document.getElementById('closeModal');
+        const modalImg = document.getElementById('modal-img');
 
-        window.addEventListener('load', loadGallery);
-        closeModal.addEventListener('click', closeModalFunc);
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModalFunc(); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.style.display === 'flex') closeModalFunc(); });
-
-        async function loadGallery() {
-            showLoading(true);
-            gallery.innerHTML = '';
-
+        async function init() {
             try {
-                // ✅ ПРОСТОЙ парсинг JPG файлов через autoindex
-                const jpgFiles = await fetchJpgFiles();
-                console.log('✅ Найдено JPG:', jpgFiles.length);
-                
-                displayGallery(jpgFiles);
-                updateStats(jpgFiles.length);
-            } catch (error) {
-                console.error('Ошибка:', error);
-                showError(`Ошибка загрузки: ${error.message}`);
-            } finally {
-                showLoading(false);
+                const files = await fetchFiles();
+                console.log('Найдено файлов:', files.length);
+                render(files);
+            } catch(e) {
+                console.error(e);
+                gallery.innerHTML = '<div style="color:white;padding:20px;">Ошибка загрузки</div>';
             }
         }
 
-        async function fetchJpgFiles() {
-            const response = await fetch(`${BASE_PATH}/`);
-            const html = await response.text();
-            
+        async function fetchFiles() {
+            const res = await fetch(`${BASE_PATH}/`);
+            const html = await res.text();
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            
-            // ✅ Ищем ТОЛЬКО JPG файлы (все регистры)
-            const links = Array.from(doc.querySelectorAll('a[href]'))
-                .map(a => a.getAttribute('href'))
-                // jpg, jpeg, JPG, JPEG и т.д.
-                .filter(href => href.match(/\.(jpe?g|JPG|JPEG|JPE?G)$/i))
-                .map(href => `${BASE_PATH}/${href}`);
-            
-            return links;
+            return Array.from(doc.querySelectorAll('a[href]'))
+                .map(a => a.href.split('/').pop())
+                .filter(name => name.match(/\.(jpe?g|png|gif|webp)$/i))
+                .map(name => `${BASE_PATH}/${name}`);
         }
 
-        function displayGallery(images) {
-            if (images.length === 0) {
-                showError('JPG файлы не найдены. Проверьте права доступа.');
-                return;
-            }
-
-            images.forEach((src, index) => {
-                const thumb = document.createElement('div');
-                thumb.className = 'thumbnail';
-                const fileName = src.split('/').pop();
-                
-                thumb.innerHTML = `
-                    <img src="${src}" alt="${fileName}" 
-                         loading="lazy" 
-                         onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjIwIiBoZWlnaHQ9IjE4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIiByeD0iMTZweCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPkDQsNC+INCx0L4uPC90ZXh0Pjwvc3Zn>'; this.style.objectFit='contain';">
-                    <div class="caption">
-                        <h3>${fileName}</h3>
-                        <p class="source">Фото ${index + 1}</p>
-                    </div>
-                `;
-                thumb.addEventListener('click', () => openModal(src, fileName));
-                gallery.appendChild(thumb);
+        function render(images) {
+            gallery.innerHTML = '';
+            images.forEach(src => {
+                const img = document.createElement('img');
+                img.src = src + '?t=' + Date.now(); // кэш-буст
+                img.onclick = () => openModal(src);
+                img.onerror = () => img.style.display = 'none';
+                gallery.appendChild(img);
             });
         }
 
-        function updateStats(imageCount) {
-            stats.innerHTML = `Найдено ${imageCount} фотографий`;
-        }
-
-        function openModal(src, title) {
-            modalImage.src = src;
-            modalImage.alt = title;
-            modal.style.display = 'flex';
+        function openModal(src) {
+            modal.style.display = 'block';
+            modalImg.src = src;
             document.body.style.overflow = 'hidden';
         }
 
-        function closeModalFunc() {
+        modal.onclick = () => {
             modal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-            modalImage.src = '';
-        }
+            document.body.style.overflow = '';
+        };
 
-        function showLoading(show) {
-            loading.style.display = show ? 'block' : 'none';
-        }
+        // ESC
+        document.onkeydown = e => {
+            if (e.key === 'Escape') modal.style.display = 'none';
+        };
 
-        function showError(message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.style.cssText = 'background: rgba(211,47,47,0.9); color: white; padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0;';
-            errorDiv.textContent = message;
-            gallery.parentNode.insertBefore(errorDiv, gallery);
-        }
+        init();
     </script>
 </body>
 </html>
