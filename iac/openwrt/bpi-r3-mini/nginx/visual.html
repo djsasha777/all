@@ -7,7 +7,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             margin: 0; 
-            padding: 20px; 
+            padding: 15px; 
             background: #111; 
             font-family: Arial, sans-serif;
             min-height: 100vh;
@@ -15,24 +15,22 @@
         #gallery {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
+            gap: 12px;
             max-width: 1600px;
             margin: 0 auto;
         }
         img {
             width: 100%; 
-            height: 240px;
+            height: 220px;  /* немного уменьшил */
             object-fit: cover; 
             cursor: pointer;
-            /* ✅ УБРАНЫ закругления */
-            transition: all 0.3s ease;
-            border: 3px solid transparent;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
         }
         img:hover { 
-            transform: scale(1.05); 
+            transform: scale(1.03); 
             border-color: #4a90e2;
-            box-shadow: 0 8px 25px rgba(74,144,226,0.4);
         }
         #modal {
             display: none;
@@ -51,29 +49,17 @@
             top: 50%; 
             left: 50%;
             transform: translate(-50%, -50%);
-            /* ✅ УБРАНО закругление */
             box-shadow: 0 0 60px rgba(255,255,255,0.1);
-        }
-        .error {
-            grid-column: 1/-1;
-            color: #ff6b6b;
-            background: rgba(255,107,107,0.1);
-            padding: 30px;
-            text-align: center;
-            border-radius: 12px;
-            border: 2px solid #ff6b6b;
-            font-size: 18px;
         }
         @media (max-width: 1400px) { #gallery { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 1000px) { #gallery { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 700px) { 
             #gallery { grid-template-columns: 1fr; }
-            img { height: 300px; }
+            img { height: 280px; }
         }
     </style>
 </head>
 <body>
-    <!-- ✅ УБРАН заголовок VISUAL -->
     <div id="gallery"></div>
     <div id="modal"><img id="modal-img"></div>
 
@@ -83,48 +69,40 @@
         
         async function init() {
             try {
-                console.log('🔄 Загрузка файлов...');
+                console.log('🔄 СВЕРХ-БЫСТРАЯ загрузка...');
                 
-                const res = await fetch(`${BASE_PATH}/`, { 
-                    method: 'GET',
-                    cache: 'no-cache'
-                });
-                
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-                }
+                const res = await fetch(`${BASE_PATH}/`, { cache: 'no-cache' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 
                 const html = await res.text();
-                console.log('📄 HTML получен');
-                
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 
                 const links = Array.from(doc.querySelectorAll('a[href]'))
                     .map(a => a.getAttribute('href'))
-                    .filter(href => href && href.match(/\.(jpe?g|png|gif|webp|bmp|tiff)$/i))
-                    .filter(href => !href.includes('..'))
+                    .filter(href => href && href.match(/\.(jpe?g|png|gif|webp)$/i))
                     .map(href => `${BASE_PATH}/${href}`);
                 
-                console.log(`✅ Найдено изображений: ${links.length}`);
+                console.log(`✅ Найдено: ${links.length}`);
                 
                 if (links.length === 0) {
-                    gallery.innerHTML = '<div class="error">Изображения не найдены. Проверьте содержимое папки.</div>';
+                    gallery.innerHTML = '<div style="color:#ff6b6b;padding:40px;text-align:center;font-size:18px;">Нет изображений</div>';
                     return;
                 }
                 
-                // ✅ НИЗКОКАЧЕСТВЕННЫЕ миниатюры для скорости
+                // 🔥 СВЕРХ-НИЗКОЕ КАЧЕСТВО ДЛЯ МОЛНИЕНОСНОЙ ГРУЗКИ
                 gallery.innerHTML = links.map(src => {
-                    const thumbSrc = `${src}?w=300&q=30&t=${Date.now()}`; // 300px, 30% качество
+                    // ЭКСТРЕМАЛЬНОЕ сжатие: 150px, 10% качество, blur
+                    const thumbSrc = `${src}?w=150&q=10&f=jpg&fl=progressive&t=${Date.now()}`;
                     return `<img src="${thumbSrc}" 
                               loading="lazy"
+                              decoding="async"
                               onerror="this.style.display='none'"
                               onclick="openModal('${src.replace(/'/g, '\\\'')}')">`;
                 }).join('');
                 
             } catch(error) {
-                console.error('❌ Ошибка:', error);
-                gallery.innerHTML = `<div class="error">Ошибка загрузки: ${error.message}</div>`;
+                gallery.innerHTML = '<div style="color:#ff6b6b;padding:40px;text-align:center;">Ошибка: ' + error.message + '</div>';
             }
         }
         
@@ -132,9 +110,8 @@
             const modal = document.getElementById('modal');
             const modalImg = document.getElementById('modal-img');
             modal.style.display = 'block';
-            modalImg.src = src + '?t=' + Date.now(); // ✅ ПОЛНОЕ качество для модалки
+            modalImg.src = src + '?t=' + Date.now(); // ПОЛНОЕ качество
             document.body.style.overflow = 'hidden';
-            console.log('🖼️ Открыто:', src);
         }
         
         document.getElementById('modal').onclick = (e) => {
