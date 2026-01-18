@@ -12,13 +12,6 @@
             font-family: Arial, sans-serif;
             min-height: 100vh;
         }
-        h1 {
-            color: #fff;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-        }
         #gallery {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -31,7 +24,7 @@
             height: 240px;
             object-fit: cover; 
             cursor: pointer;
-            border-radius: 12px;
+            /* ✅ УБРАНЫ закругления */
             transition: all 0.3s ease;
             border: 3px solid transparent;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
@@ -58,7 +51,7 @@
             top: 50%; 
             left: 50%;
             transform: translate(-50%, -50%);
-            border-radius: 10px;
+            /* ✅ УБРАНО закругление */
             box-shadow: 0 0 60px rgba(255,255,255,0.1);
         }
         .error {
@@ -76,11 +69,11 @@
         @media (max-width: 700px) { 
             #gallery { grid-template-columns: 1fr; }
             img { height: 300px; }
-            h1 { font-size: 2em; }
         }
     </style>
 </head>
 <body>
+    <!-- ✅ УБРАН заголовок VISUAL -->
     <div id="gallery"></div>
     <div id="modal"><img id="modal-img"></div>
 
@@ -92,7 +85,6 @@
             try {
                 console.log('🔄 Загрузка файлов...');
                 
-                // Проверяем доступ к директории
                 const res = await fetch(`${BASE_PATH}/`, { 
                     method: 'GET',
                     cache: 'no-cache'
@@ -121,12 +113,14 @@
                     return;
                 }
                 
-                // Рендерим миниатюры
-                gallery.innerHTML = links.map(src => 
-                    `<img src="${src}?t=${Date.now()}" 
-                          onerror="this.style.display='none'"
-                          onclick="openModal('${src.replace(/'/g, '\\\'')}')">`
-                ).join('');
+                // ✅ НИЗКОКАЧЕСТВЕННЫЕ миниатюры для скорости
+                gallery.innerHTML = links.map(src => {
+                    const thumbSrc = `${src}?w=300&q=30&t=${Date.now()}`; // 300px, 30% качество
+                    return `<img src="${thumbSrc}" 
+                              loading="lazy"
+                              onerror="this.style.display='none'"
+                              onclick="openModal('${src.replace(/'/g, '\\\'')}')">`;
+                }).join('');
                 
             } catch(error) {
                 console.error('❌ Ошибка:', error);
@@ -138,12 +132,11 @@
             const modal = document.getElementById('modal');
             const modalImg = document.getElementById('modal-img');
             modal.style.display = 'block';
-            modalImg.src = src + '?t=' + Date.now();
+            modalImg.src = src + '?t=' + Date.now(); // ✅ ПОЛНОЕ качество для модалки
             document.body.style.overflow = 'hidden';
             console.log('🖼️ Открыто:', src);
         }
         
-        // Закрытие по клику на фон
         document.getElementById('modal').onclick = (e) => {
             if (e.target.id === 'modal') {
                 document.getElementById('modal').style.display = 'none';
@@ -151,7 +144,6 @@
             }
         };
         
-        // ESC
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 document.getElementById('modal').style.display = 'none';
@@ -159,7 +151,6 @@
             }
         });
         
-        // Запуск
         window.addEventListener('load', init);
     </script>
 </body>
