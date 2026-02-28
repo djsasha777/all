@@ -13,4 +13,4 @@ jobs:
           username: ${{ secrets.R3MUSERNAME }}
           password: ${{ secrets.R3MPASSWORD }}
           port: 22
-          script_path: iac/openwrt/bpi-r3-mini/scripts/renew-certs.sh
+          script_path: iac/openwrt/bpi-r3m/scripts/renew-certs.sh

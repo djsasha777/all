@@ -3,7 +3,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - iac/openwrt/bpi-r3-mini/**
+      - iac/openwrt/bpi-r3m/**
   workflow_dispatch:
 jobs:
   provision:
@@ -17,4 +17,4 @@ jobs:
           username: ${{ secrets.R3MUSERNAME }}
           password: ${{ secrets.R3MPASSWORD }}
           port: 22
-          script_path: iac/openwrt/bpi-r3-mini/scripts/nginx-allconf.sh
+          script_path: iac/openwrt/bpi-r3m/scripts/nginx-allconf.sh
