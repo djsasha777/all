@@ -36,9 +36,14 @@ ipv4-network = {{ openconnect.ipNetwork }}
 ipv4-netmask = {{ openconnect.ipMask }}
 dns = 8.8.8.8
 ping-leases = false
+{% if openconnect.allTrafficToVpn %}
+route = default
+tunnel-all-dns = true
+{% else %}
 route = {{ openconnect.ipNetwork }}/{{ openconnect.ipMask }}
 {% for routes in clientsRoutes %}
 route = {{ routes.network }}/{{ routes.prefix }}
 {% endfor %}
+{% endif %}
 cisco-client-compat = true
 dtls-legacy = true
