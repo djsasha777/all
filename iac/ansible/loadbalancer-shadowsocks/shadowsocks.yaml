@@ -22,7 +22,7 @@
 
     - name: Download v2ray-plugin
       get_url:
-        url: https://github.com/shadowsocks/v2ray-plugin/releases/latest/download/v2ray-plugin_linux_amd64.tar.gz
+        url: https://github.com/shadowsocks/v2ray-plugin/releases/download/v1.3.2/v2ray-plugin-linux-amd64-v1.3.2.tar.gz
         dest: /tmp/v2ray-plugin.tar.gz
 
     - name: Extract v2ray-plugin
