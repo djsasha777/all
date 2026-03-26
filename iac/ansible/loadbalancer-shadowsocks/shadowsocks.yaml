@@ -14,23 +14,6 @@
         name:
           - shadowsocks-libev
         state: present
-
-    - name: Generate self-signed cert if not exists
-      shell: openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/shadowsocks-libev/server.key -out /etc/shadowsocks-libev/server.crt -subj "/CN=spongo.ru" && chmod 600 /etc/shadowsocks-libev/server.*
-      args:
-        creates: /etc/shadowsocks-libev/server.crt
-
-    - name: Download v2ray-plugin
-      get_url:
-        url: https://github.com/shadowsocks/v2ray-plugin/releases/download/v1.3.2/v2ray-plugin-linux-amd64-v1.3.2.tar.gz
-        dest: /tmp/v2ray-plugin.tar.gz
-
-    - name: Extract v2ray-plugin
-      unarchive:
-        src: /tmp/v2ray-plugin.tar.gz
-        dest: /usr/local/bin/
-        remote_src: yes
-        mode: 0755
         
     - name: Ensure shadowsocks conf is set
       template: 
