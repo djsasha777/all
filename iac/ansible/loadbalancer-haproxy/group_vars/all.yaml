@@ -35,10 +35,6 @@ haproxySubdomain:
   name: nebula
   port: 4242
   proxy: false
-- ip: 127.0.0.1
-  name: shadowsocks
-  port: 9389
-  proxy: false
 - ip: 192.168.49.2
   name: player
   port: 8000
