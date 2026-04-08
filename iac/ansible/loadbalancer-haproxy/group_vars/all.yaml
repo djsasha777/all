@@ -1,20 +1,21 @@
+acmeEnabled: false
 acmeRoot:
-  ip: 192.168.49.55
+  ip: 192.168.49.2
   port: 9090
 acmeSubdomain:
-- ip: 192.168.49.55
+- ip: 192.168.49.2
   name: www
   port: 9090
-- ip: 192.168.49.55
+- ip: 192.168.49.2
   name: home
   port: 9090
-- ip: 192.168.49.55
+- ip: 192.168.49.2
   name: git
   port: 9090
-- ip: 192.168.49.55
+- ip: 192.168.49.2
   name: player
   port: 9090
-- ip: 192.168.49.55
+- ip: 192.168.49.2
   name: browser
   port: 9090
 dnsIp: 91.149.218.39
@@ -51,12 +52,13 @@ haproxySubdomain:
   name: browser
   port: 9797
   proxy: false
+straightEnabled: false
 straightProxy:
 - name: test
   extPort: 4090
   intPort: 2222
   intIp: 1.1.0.1
-# - name: sshr3g
-#   extPort: 4091
-#   intPort: 22
-#   intIp: 192.168.49.5
+- name: sshr3g
+  extPort: 4091
+  intPort: 22
+  intIp: 192.168.49.5

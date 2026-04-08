@@ -24,6 +24,7 @@ defaults
 	errorfile 503 /etc/haproxy/errors/503.http
 	errorfile 504 /etc/haproxy/errors/504.http
 
+{% if acmeEnabled %}
 frontend acme
  bind {{ dnsIp }}:80
  mode http
@@ -44,7 +45,7 @@ backend acme
  server {{ host.name }} {{ host.ip }}:{{ host.port }}
 
 {% endfor %}
-
+{% endif %}
 #DNS FORWARDER
 
 frontend main
@@ -73,6 +74,7 @@ backend main
 
 {% endfor %}
 
+{% if straightEnabled %}
 #STAIGHT FARWARDER
 
 {% for proxy in straightProxy %}
@@ -86,3 +88,4 @@ backend {{ proxy.name }}
  server {{ proxy.name }} {{ proxy.intIp }}:{{ proxy.intPort }} check
 
 {% endfor %}
+{% endif %}
