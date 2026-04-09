@@ -33,6 +33,10 @@ haproxySubdomain:
   port: 9443
   proxy: false
 - ip: 127.0.0.1
+  name: shadow
+  port: 14801
+  proxy: false
+- ip: 127.0.0.1
   name: nebula
   port: 4242
   proxy: false
