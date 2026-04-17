@@ -40,22 +40,22 @@ haproxySubdomain:
   name: nebula
   port: 4242
   proxy: false
-- ip: 192.168.49.2
-  name: player
-  port: 8000
-  proxy: false
-- ip: 192.168.49.2
-  name: home
-  port: 8899
-  proxy: false
-- ip: 192.168.49.2
-  name: git
-  port: 8797
-  proxy: false
-- ip: 192.168.49.2
-  name: browser
-  port: 9797
-  proxy: false
+# - ip: 192.168.49.2
+#   name: player
+#   port: 8000
+#   proxy: false
+# - ip: 192.168.49.2
+#   name: home
+#   port: 8899
+#   proxy: false
+# - ip: 192.168.49.2
+#   name: git
+#   port: 8797
+#   proxy: false
+# - ip: 192.168.49.2
+#   name: browser
+#   port: 9797
+#   proxy: false
 straightEnabled: false
 straightProxy:
 - name: test
