@@ -141,6 +141,10 @@
       <button id="server3_OFF">SERVER3 OFF</button>
       <div id="responseDiv8"></div>
     </li>
+    <li>
+      <button id="server4_TOGGLE">SERVER4 TOGGLE</button>
+      <div id="responseDiv9"></div>
+    </li>
   </ul>
 
   <script>
@@ -166,6 +170,7 @@
     document.getElementById("server2_OFF").addEventListener("click", makeButtonHandler("server2_OFF", "https://home.spongo.ru/2off", "responseDiv6", "SERVER2 OFF"));
     document.getElementById("server3_ON").addEventListener("click", makeButtonHandler("server3_ON", "https://home.spongo.ru/3on", "responseDiv7", "SERVER3 ON"));
     document.getElementById("server3_OFF").addEventListener("click", makeButtonHandler("server3_OFF", "https://home.spongo.ru/3off", "responseDiv8", "SERVER3 OFF"));
+    document.getElementById("server4_TOGGLE").addEventListener("click", makeButtonHandler("server4_TOGGLE", "https://home.spongo.ru/4toggle", "responseDiv9", "SERVER4 TOGGLE"));
   </script>
 </body>
 </html>
