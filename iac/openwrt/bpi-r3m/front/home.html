@@ -118,28 +118,16 @@
       <div id="responseDiv2"></div>
     </li>
     <li>
-      <button id="server1_ON">SERVER1 ON</button>
+      <button id="server1_TOGGLE">SERVER1 ON</button>
       <div id="responseDiv3"></div>
     </li>
     <li>
-      <button id="server1_OFF">SERVER1 OFF</button>
-      <div id="responseDiv4"></div>
-    </li>
-    <li>
-      <button id="server2_ON">SERVER2 ON</button>
+      <button id="server2_TOGGLE">SERVER2 ON</button>
       <div id="responseDiv5"></div>
     </li>
     <li>
-      <button id="server2_OFF">SERVER2 OFF</button>
-      <div id="responseDiv6"></div>
-    </li>
-    <li>
-      <button id="server3_ON">SERVER3 ON</button>
+      <button id="server3_TOGGLE">SERVER3 ON</button>
       <div id="responseDiv7"></div>
-    </li>
-    <li>
-      <button id="server3_OFF">SERVER3 OFF</button>
-      <div id="responseDiv8"></div>
     </li>
     <li>
       <button id="server4_TOGGLE">SERVER4 TOGGLE</button>
@@ -164,13 +152,10 @@
 
     document.getElementById("serverON").addEventListener("click", makeButtonHandler("serverON", "https://home.spongo.ru/on", "responseDiv1", "SERVER ON"));
     document.getElementById("serverLONG").addEventListener("click", makeButtonHandler("serverLONG", "https://home.spongo.ru/long", "responseDiv2", "SERVER LONG"));
-    document.getElementById("server1_ON").addEventListener("click", makeButtonHandler("server1_ON", "https://home.spongo.ru/1on", "responseDiv3", "SERVER1 ON"));
-    document.getElementById("server1_OFF").addEventListener("click", makeButtonHandler("server1_OFF", "https://home.spongo.ru/1off", "responseDiv4", "SERVER1 OFF"));
-    document.getElementById("server2_ON").addEventListener("click", makeButtonHandler("server2_ON", "https://home.spongo.ru/2on", "responseDiv5", "SERVER2 ON"));
-    document.getElementById("server2_OFF").addEventListener("click", makeButtonHandler("server2_OFF", "https://home.spongo.ru/2off", "responseDiv6", "SERVER2 OFF"));
-    document.getElementById("server3_ON").addEventListener("click", makeButtonHandler("server3_ON", "https://home.spongo.ru/3on", "responseDiv7", "SERVER3 ON"));
-    document.getElementById("server3_OFF").addEventListener("click", makeButtonHandler("server3_OFF", "https://home.spongo.ru/3off", "responseDiv8", "SERVER3 OFF"));
-    document.getElementById("server4_TOGGLE").addEventListener("click", makeButtonHandler("server4_TOGGLE", "https://home.spongo.ru/4toggle", "responseDiv9", "SERVER4 TOGGLE"));
+    document.getElementById("server1_TOGGLE").addEventListener("click", makeButtonHandler("server1_ON", "https://home.spongo.ru/1toggle", "responseDiv3", "SERVER1"));
+    document.getElementById("server2_TOGGLE").addEventListener("click", makeButtonHandler("server2_ON", "https://home.spongo.ru/2toggle", "responseDiv5", "SERVER2"));
+    document.getElementById("server3_TOGGLE").addEventListener("click", makeButtonHandler("server3_ON", "https://home.spongo.ru/3toggle", "responseDiv7", "SERVER3"));
+    document.getElementById("server4_TOGGLE").addEventListener("click", makeButtonHandler("server4_TOGGLE", "https://home.spongo.ru/4toggle", "responseDiv9", "SERVER4"));
   </script>
 </body>
 </html>
