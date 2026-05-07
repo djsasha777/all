@@ -4,7 +4,7 @@
 
 WebServer webServer(8080);
 int brightness = 50;
-const int ledPin = 4;
+const int ledPin = 16;
 SpanCharacteristic *powerChar;
 SpanCharacteristic *brightnessChar;
 
@@ -43,7 +43,7 @@ button{padding:15px 30px;font-size:20px;margin:10px;border:none;border-radius:25
 button.off{background:#f44336;}
 #status{padding:15px;background:#333;margin:10px;border-radius:10px;}
 </style></head><body>
-<h1>LED GPIO 4</h1>
+<h1>LED GPIO 16</h1>
 <div class='brightness'>Яркость: <span id='val'>)rawliteral" + String(brightness) + R"rawliteral(</span>%</div>
 <input type='range' min='0' max='100' value='")rawliteral" + String(brightness) + R"rawliteral("' class='slider' id='slider'>
 <button onclick='setB(100)'>100%</button><button onclick='setB(50)'>50%</button><button class='off' onclick='setB(0)'>ВЫКЛ</button>
