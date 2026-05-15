@@ -10,7 +10,7 @@ jobs:
     runs-on: linux/arm
     steps:
       - uses: taiki-e/checkout-action@v1
-      - name: Run script
-        run: |
-          ls /home/gitea
-        shell: bash
+      # - name: Run script
+      #   run: |
+      #     ls /home/gitea
+      #   shell: bash
