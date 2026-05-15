@@ -9,5 +9,3 @@ uci set firewall.@rule[-1].dest_port='22 80 443'
 uci set firewall.@rule[-1].target='ACCEPT'
 uci commit firewall
 service firewall restart
-
-
