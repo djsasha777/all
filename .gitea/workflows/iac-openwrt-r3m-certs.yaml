@@ -3,14 +3,11 @@ on:
   workflow_dispatch:
 jobs:
   provision:
-    runs-on: macos-latest
+    runs-on: linux/arm
     steps:
-      - uses: taiki-e/checkout-action@v1
-      - name: Execute remote SSH commands using password
-        uses: appleboy/ssh-action@v1
-        with:
-          host: 192.168.49.2
-          username: ${{ secrets.R3MUSERNAME }}
-          password: ${{ secrets.R3MPASSWORD }}
-          port: 22
-          script_path: iac/openwrt/bpi-r3m/scripts/renew-certs.sh
+      - name: Run script
+        run: |
+          chmod +x -R /var/run/acme
+          chmod +x -R /var/run/acme/challenge
+          /usr/lib/acme/client/acme.sh --debug --renew --force home /etc/acme -d spongo.ru
+        shell: bash

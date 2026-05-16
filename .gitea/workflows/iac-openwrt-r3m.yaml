@@ -7,14 +7,16 @@ on:
   workflow_dispatch:
 jobs:
   provision:
-    runs-on: macos-latest
+    runs-on: linux/arm
     steps:
-      - uses: taiki-e/checkout-action@v1
-      - name: Execute remote SSH commands using password
-        uses: appleboy/ssh-action@v1
-        with:
-          host: 192.168.49.2
-          username: ${{ secrets.R3MUSERNAME }}
-          password: ${{ secrets.R3MPASSWORD }}
-          port: 22
-          script_path: iac/openwrt/bpi-r3m/scripts/nginx-allconf.sh
+      - name: Run script
+        run: |
+          git clone http://192.168.111.1:3000/djsasha777/all.git
+          cp -rf all/iac/openwrt/bpi-r3m/nginx/* /etc/nginx/
+          cp -r all/iac/openwrt/bpi-r3m/front /etc/
+          rm -rf all
+          chmod 644 -R /etc/nginx
+          chmod 755 /etc/nginx
+          service nginx restart
+          echo "files copied and nginx restarted."
+        shell: bash
