@@ -13,14 +13,7 @@ jobs:
     - name: Deploy haproxy via SSH
       run: |
         git clone http://192.168.111.1:3000/djsasha777/all.git
-
-        # --- ФИНАЛЬНОЕ И ВЕРНОЕ РЕШЕНИЕ ДЛЯ DROPBEAR ---
-        # Используем разные флаги для scp (-Y) и ssh (-y)
-
-        # Копируем файлы. Флаг -Y отключает проверку ключа для SCP.
-        scp -i /root/.ssh/dropbear_rsa -Y -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
-
-        # Выполняем команды на сервере. Флаг -y отключает проверку ключа для SSH.
+        scp -i /root/.ssh/dropbear_rsa -y -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
         ssh -i /root/.ssh/dropbear_rsa -y -T root@91.149.218.39 << 'EOF'
         set -e
         cd /root/loadbalancer-haproxy
