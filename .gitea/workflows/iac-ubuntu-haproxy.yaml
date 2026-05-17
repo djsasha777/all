@@ -17,7 +17,6 @@ jobs:
           ssh -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF'
           set -e
           cd /root/loadbalancer-haproxy
-          sed -i 's/91\.149\.218\.39/localhost/g' hosts.yaml
           ansible-playbook haproxy.yaml
           rm -rf /root/loadbalancer-haproxy
           echo "ansible playbook finished"
