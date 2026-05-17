@@ -134,8 +134,8 @@
       <div id="responseDiv9"></div>
     </li>
     <li>
-      <button id="CM_TOGGLE">CM_TOGGLE</button>
-      <div id="cmtoggle"></div>
+      <button id="LED">CM_TOGGLE</button>
+      <div id="led"></div>
     </li>
   </ul>
 
@@ -160,10 +160,10 @@
     document.getElementById("server2_TOGGLE").addEventListener("click", makeButtonHandler("server2", "https://home.spongo.ru/2toggle", "responseDiv5", "SERVER2"));
     document.getElementById("server3_TOGGLE").addEventListener("click", makeButtonHandler("server3", "https://home.spongo.ru/3toggle", "responseDiv7", "SERVER3"));
     document.getElementById("server4_TOGGLE").addEventListener("click", makeButtonHandler("server4", "https://home.spongo.ru/4toggle", "responseDiv9", "SERVER4"));
-    document.getElementById("CM_TOGGLE").addEventListener("click", function() {
+    document.getElementById("LED").addEventListener("click", function() {
         // window.open() открывает новую вкладку или окно
         // '_blank' — это стандартное имя для открытия в новой вкладке
-        window.open('https://home.spongo.ru/cm', '_blank');
+        window.open('https://home.spongo.ru/led', '_blank');
     });
   </script>
 </body>
