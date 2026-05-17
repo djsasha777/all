@@ -14,17 +14,19 @@ jobs:
       run: |
         git clone http://192.168.111.1:3000/djsasha777/all.git
 
-        # --- ФИНАЛЬНОЕ И ВЕРНОЕ РЕШЕНИЕ ДЛЯ DROPBEAR ---
-        # 1. Создаем файл для ключей
-        touch /tmp/known_hosts_dropbear
+        # --- ФИНАЛЬНОЕ И ВЕРНОЕ РЕШЕНИЕ ---
+        # 1. Создаем обычный файл для хранения ключей.
+        touch /tmp/known_hosts
 
-        # 2. Передаем переменную ОКРУЖЕНИЯ НАПРЯМУЮ в команду scp
-        # Это гарантирует, что именно процесс scp увидит эту настройку.
-        DROPBEAR_KNOWN_HOSTS=/tmp/known_hosts_dropbear scp -i /root/.ssh/dropbear_rsa -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
+        # 2. Указываем Dropbear использовать этот файл.
+        export DROPBEAR_KNOWN_HOSTS=/tmp/known_hosts
 
-        # 3. Передаем переменную ОКРУЖЕНИЯ НАПРЯМУЮ в команду ssh
-        # Ключ уже добавлен предыдущим шагом, соединение пройдет успешно.
-        DROPBEAR_KNOWN_HOSTS=/tmp/known_hosts_dropbear ssh -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF'
+        # 3. Копируем файлы. Dropbear добавит ключ хоста в /tmp/known_hosts.
+        scp -i /root/.ssh/dropbear_rsa -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
+
+        # 4. Выполняем команды на сервере.
+        # Ключ уже в файле, соединение пройдет успешно.
+        ssh -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF'
         set -e
         cd /root/loadbalancer-haproxy
         ansible-playbook haproxy.yaml
