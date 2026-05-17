@@ -1,0 +1,25 @@
+name: ubuntu-haproxy
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - iac/ansible/loadbalancer/haproxy/**
+  workflow_dispatch:
+
+jobs:
+  provision:
+    runs-on: linux/arm
+    steps:
+      - name: Deploy haproxy via SSH
+        run: |
+          ssh -i /root/.ssh/dropbear_rsa root@91.149.218.39 << 'EOF'
+            set -e
+            cd /root
+            git clone https://git.spongo.ru/djsasha777/all.git
+            cd all/iac/ansible/loadbalancer/haproxy
+            sed -i 's/91\.149\.218\.39/localhost/g' hosts.yaml
+            ansible-playbook haproxy.yaml
+            cd /root
+            rm - rf all
+            echo "ansible playbook finished"
+          EOF
