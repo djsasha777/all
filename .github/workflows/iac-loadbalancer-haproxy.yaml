@@ -1,7 +1,7 @@
 name: loadbalancer-haproxy
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "fake" ]
     paths:
       - iac/ansible/loadbalancer-haproxy/**
 
