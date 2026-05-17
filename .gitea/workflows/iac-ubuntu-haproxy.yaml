@@ -12,13 +12,11 @@ jobs:
     steps:
     - name: Deploy haproxy via SSH
       run: |
-        git clone http://192.168.111.1:3000/djsasha777/all.git
+        # Клонируем по SSH, а не по HTTP
+        git clone ssh://git@192.168.111.1:3000/djsasha777/all.git
 
-        # --- ПРАВИЛЬНОЕ РЕШЕНИЕ ДЛЯ DROPBEAR ---
-        # 1. Создаем пустой файл для списка известных хостов
+        # --- Решение для Dropbear (оставляем на всякий случай) ---
         touch /tmp/known_hosts_dropbear
-
-        # 2. Указываем Dropbear использовать этот файл
         export DROPBEAR_KNOWN_HOSTS=/tmp/known_hosts_dropbear
 
         # Копируем файлы
