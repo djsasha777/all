@@ -16,11 +16,10 @@ jobs:
 
         # --- ФИНАЛЬНОЕ И ВЕРНОЕ РЕШЕНИЕ ---
         # 1. Создаем файл с ответом "yes" и переводом строки.
-        printf 'yes\n' > /tmp/answer.txt
 
         # 2. Копируем файлы, передавая ответ в SCP.
         #    Ваша версия SCP прочитает "yes" и не будет запрашивать подтверждение.
-        scp -i /root/.ssh/dropbear_rsa -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/ < /tmp/answer.txt
+        printf 'yes\n' | scp -i /root/.ssh/dropbear_rsa -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
 
         # 3. Теперь подключаемся по SSH. Ключ уже в кэше, соединение пройдет.
         ssh -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF'
