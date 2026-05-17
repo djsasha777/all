@@ -10,20 +10,24 @@ jobs:
   provision:
     runs-on: linux/arm
     steps:
-      - name: Deploy haproxy via SSH
-        run: |
-          git clone http://192.168.111.1:3000/djsasha777/all.git
+    - name: Deploy haproxy via SSH
+      run: |
+        git clone http://192.168.111.1:3000/djsasha777/all.git
 
-          # Копируем файлы, отключив проверку ключа
-          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /root/.ssh/dropbear_rsa -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
+        # --- ЭТО РЕШЕНИЕ ДЛЯ DROPBEAR ---
+        # Указываем пустой файл для известных хостов.
+        export DROPBEAR_KNOWN_HOSTS=/dev/null
 
-          # Выполняем команды на сервере, также отключив проверку
-          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF'
-          set -e
-          cd /root/loadbalancer-haproxy
-          ansible-playbook haproxy.yaml
-          rm -rf /root/loadbalancer-haproxy
-          echo "ansible playbook finished"
-          EOF
+        # Копируем файлы
+        scp -i /root/.ssh/dropbear_rsa -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
 
-          rm -rf all
+        # Выполняем команды на сервере
+        ssh -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF'
+        set -e
+        cd /root/loadbalancer-haproxy
+        ansible-playbook haproxy.yaml
+        rm -rf /root/loadbalancer-haproxy
+        echo "ansible playbook finished"
+        EOF
+
+        rm -rf all
