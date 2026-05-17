@@ -14,9 +14,12 @@ jobs:
       run: |
         git clone http://192.168.111.1:3000/djsasha777/all.git
 
-        # --- ЭТО РЕШЕНИЕ ДЛЯ DROPBEAR ---
-        # Указываем пустой файл для известных хостов.
-        export DROPBEAR_KNOWN_HOSTS=/dev/null
+        # --- ПРАВИЛЬНОЕ РЕШЕНИЕ ДЛЯ DROPBEAR ---
+        # 1. Создаем пустой файл для списка известных хостов
+        touch /tmp/known_hosts_dropbear
+
+        # 2. Указываем Dropbear использовать этот файл
+        export DROPBEAR_KNOWN_HOSTS=/tmp/known_hosts_dropbear
 
         # Копируем файлы
         scp -i /root/.ssh/dropbear_rsa -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
