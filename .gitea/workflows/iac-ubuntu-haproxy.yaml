@@ -10,23 +10,18 @@ jobs:
   provision:
     runs-on: linux/arm
     steps:
-    - name: Deploy haproxy via SSH
+    - name: Deploy haproxy via SSH (with printf)
       run: |
         git clone http://192.168.111.1:3000/djsasha777/all.git
 
         # --- ФИНАЛЬНОЕ И ВЕРНОЕ РЕШЕНИЕ ---
-        # 1. Создаем обычный файл для хранения ключей.
-        touch /tmp/known_hosts
+        # 1. Создаем файл с ответом "yes" и переводом строки.
+        #    Это именно то, что ждет Dropbear.
+        printf 'yes\n' > /tmp/answer.txt
 
-        # 2. Указываем Dropbear использовать этот файл.
-        export DROPBEAR_KNOWN_HOSTS=/tmp/known_hosts
-
-        # 3. Копируем файлы. Dropbear добавит ключ хоста в /tmp/known_hosts.
-        scp -i /root/.ssh/dropbear_rsa -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
-
-        # 4. Выполняем команды на сервере.
-        # Ключ уже в файле, соединение пройдет успешно.
-        ssh -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF'
+        # 2. Запускаем SSH, перенаправляя содержимое файла в его стандартный ввод.
+        #    Клиент Dropbear прочитает наш ответ и не будет запрашивать подтверждение.
+        ssh -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF' < /tmp/answer.txt
         set -e
         cd /root/loadbalancer-haproxy
         ansible-playbook haproxy.yaml
