@@ -12,14 +12,14 @@ jobs:
     steps:
       - name: Deploy haproxy via SSH
         run: |
-          ssh -i /root/.ssh/dropbear_rsa root@91.149.218.39 << 'EOF'
-            set -e
-            cd /root
-            git clone https://git.spongo.ru/djsasha777/all.git
-            cd all/iac/ansible/loadbalancer/haproxy
-            sed -i 's/91\.149\.218\.39/localhost/g' hosts.yaml
-            ansible-playbook haproxy.yaml
-            cd /root
-            rm - rf all
-            echo "ansible playbook finished"
+          git clone http://192.168.111.1:3000/djsasha777/all.git
+          scp -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
+          ssh -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF'
+          set -e
+          cd /root/loadbalancer-haproxy
+          sed -i 's/91\.149\.218\.39/localhost/g' hosts.yaml
+          ansible-playbook haproxy.yaml
+          rm -rf /root/loadbalancer-haproxy
+          echo "ansible playbook finished"
           EOF
+          rm -rf all
