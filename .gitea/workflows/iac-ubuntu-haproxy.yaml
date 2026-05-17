@@ -10,18 +10,20 @@ jobs:
   provision:
     runs-on: linux/arm
     steps:
-    - name: Deploy haproxy via SSH (with printf)
+    - name: Deploy haproxy via SSH and SCP (with printf)
       run: |
         git clone http://192.168.111.1:3000/djsasha777/all.git
 
         # --- ФИНАЛЬНОЕ И ВЕРНОЕ РЕШЕНИЕ ---
         # 1. Создаем файл с ответом "yes" и переводом строки.
-        #    Это именно то, что ждет Dropbear.
         printf 'yes\n' > /tmp/answer.txt
 
-        # 2. Запускаем SSH, перенаправляя содержимое файла в его стандартный ввод.
-        #    Клиент Dropbear прочитает наш ответ и не будет запрашивать подтверждение.
-        ssh -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF' < /tmp/answer.txt
+        # 2. Копируем файлы, передавая ответ в SCP.
+        #    Ваша версия SCP прочитает "yes" и не будет запрашивать подтверждение.
+        scp -i /root/.ssh/dropbear_rsa -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/ < /tmp/answer.txt
+
+        # 3. Теперь подключаемся по SSH. Ключ уже в кэше, соединение пройдет.
+        ssh -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF'
         set -e
         cd /root/loadbalancer-haproxy
         ansible-playbook haproxy.yaml
