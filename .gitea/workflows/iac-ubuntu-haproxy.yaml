@@ -3,7 +3,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - iac/ansible/loadbalancer/haproxy/**
+      - iac/ansible/loadbalancer-haproxy/**
   workflow_dispatch:
 
 jobs:
