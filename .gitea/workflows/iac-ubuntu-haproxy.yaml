@@ -13,12 +13,17 @@ jobs:
       - name: Deploy haproxy via SSH
         run: |
           git clone http://192.168.111.1:3000/djsasha777/all.git
-          scp -i /root/.ssh/dropbear_rsa -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
-          ssh -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF'
+
+          # Копируем файлы, отключив проверку ключа
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /root/.ssh/dropbear_rsa -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
+
+          # Выполняем команды на сервере, также отключив проверку
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF'
           set -e
           cd /root/loadbalancer-haproxy
           ansible-playbook haproxy.yaml
           rm -rf /root/loadbalancer-haproxy
           echo "ansible playbook finished"
           EOF
+
           rm -rf all
