@@ -19,7 +19,7 @@ jobs:
         ssh -T root@91.149.218.39 << 'EOF'
         set -e
         cd /root/loadbalancer-shadowsocks
-        ansible-playbook local.yaml
+        ansible-playbook local.yaml --extra-vars "sspassword=$SS_PASSWORD"
         rm -rf /root/loadbalancer-shadowsocks
         echo "ansible playbook finished"
         EOF
