@@ -1,0 +1,26 @@
+name: ubuntu-openconnect
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - iac/ansible/loadbalancer-openconnect/**
+  workflow_dispatch:
+
+jobs:
+  provision:
+    runs-on: linux/arm
+    steps:
+    - name: Deploy openconnect via SSH
+      run: |
+        git clone http://192.168.111.1:3000/djsasha777/all.git
+
+        scp -r all/iac/ansible/loadbalancer-openconnect root@91.149.218.39:/root/
+
+        ssh -T root@91.149.218.39 << 'EOF'
+        set -e
+        cd /root/loadbalancer-openconnect
+        ansible-playbook local.yaml
+        rm -rf /root/loadbalancer-openconnect
+        echo "ansible playbook finished"
+        EOF
+        rm -rf all

@@ -1,0 +1,26 @@
+name: ubuntu-nebula
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - iac/ansible/loadbalancer-nebula/**
+  workflow_dispatch:
+
+jobs:
+  provision:
+    runs-on: linux/arm
+    steps:
+    - name: Deploy nebula via SSH
+      run: |
+        git clone http://192.168.111.1:3000/djsasha777/all.git
+
+        scp -r all/iac/ansible/loadbalancer-nebula root@91.149.218.39:/root/
+
+        ssh -T root@91.149.218.39 << 'EOF'
+        set -e
+        cd /root/loadbalancer-nebula
+        ansible-playbook local.yaml
+        rm -rf /root/loadbalancer-nebula
+        echo "ansible playbook finished"
+        EOF
+        rm -rf all

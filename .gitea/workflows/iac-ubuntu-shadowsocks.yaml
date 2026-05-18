@@ -1,0 +1,26 @@
+name: ubuntu-shadowsocks
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - iac/ansible/loadbalancer-shadowsocks/**
+  workflow_dispatch:
+
+jobs:
+  provision:
+    runs-on: linux/arm
+    steps:
+    - name: Deploy shadowsocks via SSH
+      run: |
+        git clone http://192.168.111.1:3000/djsasha777/all.git
+
+        scp -r all/iac/ansible/loadbalancer-shadowsocks root@91.149.218.39:/root/
+
+        ssh -T root@91.149.218.39 << 'EOF'
+        set -e
+        cd /root/loadbalancer-shadowsocks
+        ansible-playbook local.yaml
+        rm -rf /root/loadbalancer-shadowsocks
+        echo "ansible playbook finished"
+        EOF
+        rm -rf all
