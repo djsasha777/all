@@ -10,31 +10,25 @@ jobs:
   provision:
     runs-on: linux/arm
     steps:
-    - name: Deploy haproxy via SSH (Final Solution)
+    - name: Deploy haproxy via SSH
       run: |
         git clone http://192.168.111.1:3000/djsasha777/all.git
 
-        # --- ФИНАЛЬНОЕ И ВЕРНОЕ РЕШЕНИЕ ---
-        # 1. Создаем файл для хранения ключей
-        touch /tmp/known_hosts
+        ssh-keyscan -H 91.149.218.39 >> ~/.ssh/known_hosts
 
-        # 2. Указываем Dropbear использовать этот файл
-        export DROPBEAR_KNOWN_HOSTS=/tmp/known_hosts
+        scp -i /root/.ssh/dropbear_rsa \
+            -oUserKnownHostsFile=~/.ssh/known_hosts \
+            -oHostKeyAlgorithms=+ssh-rsa \
+            -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
 
-        # 3. ЭТОТ ШАГ РЕШАЕТ ПРОБЛЕМУ:
-        #    Явно указываем SCP использовать ТОЛЬКО RSA-ключ хоста.
-        #    Опция -r <keytype> заставляет Dropbear игнорировать другие типы ключей.
-        scp -i /root/.ssh/dropbear_rsa -r rsa -oHostKeyAlgorithms=+ssh-rsa \
-            all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
-
-        # 4. Теперь подключаемся по SSH.
-        #    Ключ уже добавлен в /tmp/known_hosts предыдущим шагом.
-        ssh -i /root/.ssh/dropbear_rsa -T root@91.149.218.39 << 'EOF'
+        ssh -i /root/.ssh/dropbear_rsa \
+            -oUserKnownHostsFile=~/.ssh/known_hosts \
+            -oHostKeyAlgorithms=+ssh-rsa \
+            -T root@91.149.218.39 << 'EOF'
         set -e
         cd /root/loadbalancer-haproxy
         ansible-playbook haproxy.yaml
         rm -rf /root/loadbalancer-haproxy
         echo "ansible playbook finished"
         EOF
-
         rm -rf all
