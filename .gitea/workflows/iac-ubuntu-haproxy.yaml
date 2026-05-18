@@ -16,14 +16,19 @@ jobs:
 
         ssh-keyscan -H 91.149.218.39 >> ~/.ssh/known_hosts
 
-        scp -i /root/.ssh/dropbear_rsa \
-            -oUserKnownHostsFile=~/.ssh/known_hosts \
+        ssh -i ~/.ssh/id_rsa \
             -oHostKeyAlgorithms=+ssh-rsa \
+            -oUserKnownHostsFile=~/.ssh/known_hosts \
+            root@91.149.218.39 "mkdir -p /root/loadbalancer-haproxy"
+
+        scp -i ~/.ssh/id_rsa \
+            -oHostKeyAlgorithms=+ssh-rsa \
+            -oUserKnownHostsFile=~/.ssh/known_hosts \
             -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
 
-        ssh -i /root/.ssh/dropbear_rsa \
-            -oUserKnownHostsFile=~/.ssh/known_hosts \
+        ssh -i ~/.ssh/id_rsa \
             -oHostKeyAlgorithms=+ssh-rsa \
+            -oUserKnownHostsFile=~/.ssh/known_hosts \
             -T root@91.149.218.39 << 'EOF'
         set -e
         cd /root/loadbalancer-haproxy
