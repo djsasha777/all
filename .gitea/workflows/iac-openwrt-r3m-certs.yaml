@@ -7,7 +7,26 @@ jobs:
     steps:
       - name: Run script
         run: |
+          git clone http://192.168.111.1:3000/djsasha777/all.git
+
+          scp -r all/iac/ansible/loadbalancer-haproxy root@91.149.218.39:/root/
+
+          ssh -T root@91.149.218.39 << 'EOF'
+          set -e
+          cd /root/loadbalancer-haproxy
+          sed -i 's/acmeEnabled: false/acmeEnabled: true/' group_vars/all.yaml
+          ansible-playbook local.yaml
+          EOF
           chmod +x -R /var/run/acme
           chmod +x -R /var/run/acme/challenge
           /usr/lib/acme/client/acme.sh --debug --renew --force --home /etc/acme -d spongo.ru
+          ssh -T root@91.149.218.39 << 'EOF'
+          set -e
+          cd /root/loadbalancer-haproxy
+          sed -i 's/acmeEnabled: true/acmeEnabled: false/' group_vars/all.yaml
+          ansible-playbook local.yaml
+          rm -rf /root/loadbalancer-haproxy
+          echo "ansible playbook finished"
+          EOF
+          rm -rf all
         shell: bash
