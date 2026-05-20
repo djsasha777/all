@@ -16,7 +16,7 @@ jobs:
 
         scp -r all/iac/ansible/loadbalancer-shadowsocks root@91.149.218.39:/root/
 
-        ssh -T root@91.149.218.39 << 'EOF'
+        ssh -T root@91.149.218.39 "SS_PASSWORD='$SS_PASSWORD' bash -s" << 'EOF'
         set -e
         cd /root/loadbalancer-shadowsocks
         ansible-playbook shadowsocks.yaml --extra-vars "sspassword=$SS_PASSWORD"
