@@ -19,7 +19,7 @@ jobs:
         ssh -T root@91.149.218.39 << 'EOF'
         set -e
         cd /root/loadbalancer-openconnect
-        ansible-playbook local.yaml
+        ansible-playbook openconnect.yaml
         rm -rf /root/loadbalancer-openconnect
         echo "ansible playbook finished"
         EOF

@@ -19,7 +19,7 @@ jobs:
         ssh -T root@91.149.218.39 << 'EOF'
         set -e
         cd /root/loadbalancer-haproxy
-        ansible-playbook local.yaml
+        ansible-playbook haproxy.yaml
         rm -rf /root/loadbalancer-haproxy
         echo "ansible playbook finished"
         EOF

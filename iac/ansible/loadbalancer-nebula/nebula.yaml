@@ -1,6 +1,6 @@
 ---
 - name: install nebula
-  hosts: server
+  hosts: localhost
   vars:
     ansible_user: root
   tasks:

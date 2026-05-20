@@ -1,6 +1,6 @@
 ---
 - name: install shadowsocks
-  hosts: server
+  hosts: localhost
   vars:
     ansible_user: root
   tasks:
@@ -25,4 +25,3 @@
         name: shadowsocks-libev
         state: restarted
         enabled: yes
-        

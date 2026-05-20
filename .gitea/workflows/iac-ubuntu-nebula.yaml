@@ -19,7 +19,7 @@ jobs:
         ssh -T root@91.149.218.39 << 'EOF'
         set -e
         cd /root/loadbalancer-nebula
-        ansible-playbook local.yaml
+        ansible-playbook nebula.yaml
         rm -rf /root/loadbalancer-nebula
         echo "ansible playbook finished"
         EOF
