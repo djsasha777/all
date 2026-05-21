@@ -1,5 +1,9 @@
 name: openwrt-bpi-r3m-certs-renew
 on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - iac/openwrt/bpi-r3m/etc/**
   workflow_dispatch:
 jobs:
   provision:
