@@ -49,6 +49,10 @@ haproxySubdomain:
   name: browser
   port: 9797
   proxy: false
+- ip: 192.168.49.2
+  name: mqtt
+  port: 8497
+  proxy: false
 straightEnabled: false
 straightProxy:
 - name: test
