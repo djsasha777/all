@@ -49,18 +49,10 @@ haproxySubdomain:
   name: browser
   port: 9797
   proxy: false
-- ip: 192.168.49.2
-  name: mqtt
-  port: 8497
-  proxy: false
-straightEnabled: false
+straightEnabled: true
 straightProxy:
 - name: test
   extPort: 4090
-  intPort: 2222
-  intIp: 1.1.0.1
-- name: sshr3g
-  extPort: 4091
-  intPort: 22
-  intIp: 192.168.49.5
+  intPort: 8497
+  intIp: 192.168.49.2
   
