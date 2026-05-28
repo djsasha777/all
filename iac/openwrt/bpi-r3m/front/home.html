@@ -137,6 +137,10 @@
       <button id="LED">LED</button>
       <div id="led"></div>
     </li>
+    <li>
+      <button id="SENSORS">SENSORS</button>
+      <div id="sensors"></div>
+    </li>
   </ul>
 
   <script>
@@ -160,11 +164,8 @@
     document.getElementById("server2_TOGGLE").addEventListener("click", makeButtonHandler("server2", "https://home.spongo.ru/2toggle", "responseDiv5", "SERVER2"));
     document.getElementById("server3_TOGGLE").addEventListener("click", makeButtonHandler("server3", "https://home.spongo.ru/3toggle", "responseDiv7", "SERVER3"));
     document.getElementById("server4_TOGGLE").addEventListener("click", makeButtonHandler("server4", "https://home.spongo.ru/4toggle", "responseDiv9", "SERVER4"));
-    document.getElementById("LED").addEventListener("click", function() {
-        // window.open() открывает новую вкладку или окно
-        // '_blank' — это стандартное имя для открытия в новой вкладке
-        window.open('https://home.spongo.ru/led', '_blank');
-    });
+    document.getElementById("LED").addEventListener("click", function() {window.open('https://home.spongo.ru/led', '_blank');});
+    document.getElementById("SENSORS").addEventListener("click", function() {window.open('https://home.spongo.ru/sensors', '_blank');});
   </script>
 </body>
 </html>
