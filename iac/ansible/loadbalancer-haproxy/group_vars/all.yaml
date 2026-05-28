@@ -49,7 +49,7 @@ haproxySubdomain:
   name: browser
   port: 9797
   proxy: false
-straightEnabled: true
+straightEnabled: false
 straightProxy:
 - name: test
   extPort: 4090
