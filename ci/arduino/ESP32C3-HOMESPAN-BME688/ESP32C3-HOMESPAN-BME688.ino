@@ -6,6 +6,9 @@
 
 WebServer server(8080);
 
+// --- Глобальное состояние двери ---
+bool doorOpen = false;  // true = открыта, false = закрыта
+
 struct BME68xHub : Service::TemperatureSensor {
   SpanCharacteristic *temp, *hum;
   Service::HumiditySensor *humService;
@@ -92,7 +95,30 @@ struct BME68xHub : Service::TemperatureSensor {
   }
 };
 
+// --- Датчик открытия двери (Contact Sensor) ---
+struct DoorContactSensor : Service::ContactSensor {
+  SpanCharacteristic *contactState;
+
+  DoorContactSensor() : Service::ContactSensor() {
+    // CurrentContactState: 0 = contacted (закрыто), 1 = not contacted (открыто)
+    contactState = new Characteristic::ContactSensorState(doorOpen ? 1 : 0);
+    new Characteristic::Name("Дверь");
+  }
+
+  void updateDoorState(bool open) {
+    doorOpen = open;
+    contactState->setVal(doorOpen ? 1 : 0);
+    LOG1("Door state: %s\n", doorOpen ? "OPEN" : "CLOSED");
+  }
+
+  void loop() {
+    // Здесь можно добавить опрос GPIO, если геркон подключён к этой ESP32
+    // Для твоего случая состояние прилетает извне через HTTP
+  }
+};
+
 BME68xHub *hub;
+DoorContactSensor *doorSensor;
 
 void setupWebServer() {
   server.on("/", []() {
@@ -111,6 +137,8 @@ h1{text-align:center;color:#2c3e50;}
 .mode{font-size:18px;padding:8px;border-radius:6px;display:inline-block;}
 .REAL{background:#d4edda;color:#155724;}
 .FAKE{background:#fff3cd;color:#856404;}
+.OPEN{background:#f8d7da;color:#721c24;}
+.CLOSED{background:#d4edda;color:#155724;}
 .data-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;}
 @media(max-width:600px){.data-grid{grid-template-columns:1fr;}}
 </style>
@@ -120,29 +148,35 @@ h1{text-align:center;color:#2c3e50;}
 <div class='data-grid'>
 )HTML";
 
-    html += "<div class='card'><b>Температура</b><br><span class='val'>";
-    html += (hub->bmeOk ? String(hub->temperature, 1) : String(hub->fakeTemp, 1));
-    html += " °C</span></div>";
+  html += "<div class='card'><b>Температура</b><br><span class='val'>";
+  html += (hub->bmeOk ? String(hub->temperature, 1) : String(hub->fakeTemp, 1));
+  html += " °C</span></div>";
 
-    html += "<div class='card'><b>Влажность</b><br><span class='val'>";
-    html += (hub->bmeOk ? String(hub->humidity, 1) : String(hub->fakeHum, 1));
-    html += " %</span></div>";
+  html += "<div class='card'><b>Влажность</b><br><span class='val'>";
+  html += (hub->bmeOk ? String(hub->humidity, 1) : String(hub->fakeHum, 1));
+  html += " %</span></div>";
 
-    html += "<div class='card'><b>Давление</b><br><span class='val'>";
-    html += (hub->bmeOk ? String(hub->pressure_mmHg, 1) : String(hub->fakePress_mmHg, 1));
-    html += " мм рт.ст.</span></div>";
+  html += "<div class='card'><b>Давление</b><br><span class='val'>";
+  html += (hub->bmeOk ? String(hub->pressure_mmHg, 1) : String(hub->fakePress_mmHg, 1));
+  html += " мм рт.ст.</span></div>";
 
-    html += "<div class='card'><b>VOC</b><br><span class='val'>";
-    html += (hub->bmeOk ? String(hub->gas_resistance / 1000.0, 0) : String(hub->fakeGas / 1000.0, 0));
-    html += " kΩ</span></div>";
+  html += "<div class='card'><b>VOC</b><br><span class='val'>";
+  html += (hub->bmeOk ? String(hub->gas_resistance / 1000.0, 0) : String(hub->fakeGas / 1000.0, 0));
+  html += " kΩ</span></div>";
 
-    html += "<div class='card'><b>Режим</b><br><span class='mode ";
-    html += (hub->bmeOk ? "REAL" : "FAKE");
-    html += "'>";
-    html += (hub->bmeOk ? "REAL" : "FAKE");
-    html += "</span></div>";
+  html += "<div class='card'><b>Дверь</b><br><span class='val ";
+  html += doorOpen ? "OPEN" : "CLOSED";
+  html += "'>";
+  html += doorOpen ? "ОТКРЫТА" : "ЗАКРЫТА";
+  html += "</span></div>";
 
-    html += R"HTML(
+  html += "<div class='card'><b>Режим</b><br><span class='mode ";
+  html += (hub->bmeOk ? "REAL" : "FAKE");
+  html += "'>";
+  html += (hub->bmeOk ? "REAL" : "FAKE");
+  html += "</span></div>";
+
+  html += R"HTML(
 </div>
 <p style='text-align:center;color:#666;font-size:14px;'>Auto-refresh 10s</p>
 <script>setTimeout(()=>location.reload(),10000);</script>
@@ -151,6 +185,17 @@ h1{text-align:center;color:#2c3e50;}
 )HTML";
 
     server.send(200, "text/html", html);
+  });
+
+  // Обработчик /sensor1/true и /sensor1/false
+  server.on("/sensor1/true", []() {
+    doorSensor->updateDoorState(true);  // дверь открыта
+    server.send(200, "application/json", "{\"ok\":true,\"door\":\"open\"}");
+  });
+
+  server.on("/sensor1/false", []() {
+    doorSensor->updateDoorState(false);  // дверь закрыта
+    server.send(200, "application/json", "{\"ok\":true,\"door\":\"closed\"}");
   });
 
   server.begin();
@@ -166,10 +211,14 @@ void setup() {
       new Characteristic::Name("BME68x C3");
 
   hub = new BME68xHub();
+  doorSensor = new DoorContactSensor();
+
   setupWebServer();
 }
 
 void loop() {
   homeSpan.poll();
   server.handleClient();
+  hub->loop();
+  doorSensor->loop();
 }
