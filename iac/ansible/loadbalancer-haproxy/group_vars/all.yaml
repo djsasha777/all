@@ -15,7 +15,7 @@ acmeSubdomain:
 - ip: 192.168.49.2
   name: browser
   port: 9090
-dnsIp: 91.149.218.39
+dnsIp: 212.193.2.110
 dnsName: spongo.ru
 haproxyRoot:
   ip: 192.168.49.2

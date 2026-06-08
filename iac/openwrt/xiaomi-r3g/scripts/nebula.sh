@@ -10,7 +10,7 @@ pki:
   key: /opt/nebula/router.key
 
 static_host_map:
-  "192.168.49.1": ["91.149.218.39:4242"]
+  "192.168.49.1": ["212.193.2.110:4242"]
 
 lighthouse:
   am_lighthouse: false

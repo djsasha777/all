@@ -14,9 +14,9 @@ jobs:
       run: |
         git clone http://192.168.111.1:3000/djsasha777/all.git
 
-        scp -r all/iac/ansible/loadbalancer-openconnect root@91.149.218.39:/root/
+        scp -r all/iac/ansible/loadbalancer-openconnect root@212.193.2.110:/root/
 
-        ssh -T root@91.149.218.39 << 'EOF'
+        ssh -T root@212.193.2.110 << 'EOF'
         set -e
         cd /root/loadbalancer-openconnect
         ansible-playbook openconnect.yaml

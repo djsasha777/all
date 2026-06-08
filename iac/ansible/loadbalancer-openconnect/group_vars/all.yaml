@@ -1,7 +1,7 @@
 ---
 
 dnsName: spongo.ru
-dnsIp: 91.149.218.39
+dnsIp: 212.193.2.110
 
 openconnect:
   allTrafficToVpn: true
