@@ -163,3 +163,14 @@
         state: restarted
         enabled: yes
 
+    - name: Check if NAT MASQUERADE rule exists
+      ansible.builtin.command:
+        cmd: iptables -t nat -S | grep -q "POSTROUTING -s {{ openconnect.ipNetwork }}/24 -o eth0 -j MASQUERADE"
+      register: nat_rule_exists
+      changed_when: false
+      ignore_errors: yes
+
+    - name: Add NAT MASQUERADE rule if missing
+      ansible.builtin.command:
+        cmd: iptables -t nat -A POSTROUTING -s {{ openconnect.ipNetwork }}/24 -o eth0 -j MASQUERADE
+      when: nat_rule_exists.rc is defined and nat_rule_exists.rc != 0
