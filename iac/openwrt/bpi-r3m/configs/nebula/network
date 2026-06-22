@@ -1,0 +1,3 @@
+config interface 'nebula1'
+	option proto 'nebula'
+	option config_file '/opt/nebula/config.yaml'

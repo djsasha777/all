@@ -1,0 +1,8 @@
+config zone
+	option name 'nebula'
+	option input 'ACCEPT'
+	option output 'ACCEPT'
+	option forward 'ACCEPT'
+	list device 'nebula1'
+	option masq '1'
+	list network 'nebula1'

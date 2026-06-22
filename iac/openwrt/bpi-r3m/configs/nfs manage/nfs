@@ -1,0 +1,11 @@
+config share
+	option enabled '1'
+	option path '/mnt/nvme0n1/nfs'
+	option clients '*'
+	option options 'rw,sync,root_squash,all_squash,insecure,no_subtree_check'
+
+config share
+	option enabled '1'
+	option path '/mnt/sda1'
+	option clients '*'
+	option options 'rw,sync,root_squash,all_squash,insecure,no_subtree_check'

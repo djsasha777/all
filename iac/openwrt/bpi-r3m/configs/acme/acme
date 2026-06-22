@@ -1,0 +1,16 @@
+config acme
+	option account_email 'djsasha777@mail.ru'
+	option debug '1'
+
+config cert 'spongo'
+	option enabled '1'
+	option use_staging '0'
+	option keylength '2048'
+	option update_uhttpd '0'
+	option update_nginx '0'
+	option validation_method 'webroot'
+	list domains 'spongo.ru'
+	list domains 'www.spongo.ru'
+	list domains 'home.spongo.ru'
+	list domains 'git.spongo.ru'
+	list domains 'browser.spongo.ru'
