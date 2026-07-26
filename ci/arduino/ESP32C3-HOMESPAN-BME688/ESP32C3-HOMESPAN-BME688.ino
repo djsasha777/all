@@ -1,6 +1,7 @@
 #include "HomeSpan.h"
 #include <Wire.h>
-#include "bme68xLibrary.h"
+#include <Adafruit_Sensor.h>
+#include "Adafruit_BME680.h"
 #include <WiFi.h>
 #include <WebServer.h>
 
@@ -11,12 +12,14 @@ bool doorOpen = false;  // true = открыта, false = закрыта
 
 struct BME68xHub : Service::TemperatureSensor {
   SpanCharacteristic *temp, *hum;
+  SpanCharacteristic *pressure; // Добавлено: указатель на характеристику давления
+  SpanCharacteristic *gas;      // Добавлено: указатель на характеристику VOC
   Service::HumiditySensor *humService;
 
   unsigned long lastUpdate, fakeLastUpdate;
   float temperature, humidity;
   float pressure_mmHg, gas_resistance;
-  Bme68x bme;
+  Adafruit_BME680 bme;
   bool bmeOk;
   float fakeTemp, fakeHum, fakePress_mmHg, fakeGas;
 
@@ -30,6 +33,14 @@ struct BME68xHub : Service::TemperatureSensor {
     hum->setRange(0,100);
     new Characteristic::Name("Влажность");
 
+    pressure = new Characteristic::CurrentAmbientLightLevel(760.0); 
+    pressure->setRange(700, 800);
+    new Characteristic::Name("Давление");
+
+    gas = new Characteristic::CarbonDioxideLevel(100); 
+    gas->setRange(0, 500);
+    new Characteristic::Name("VOC (сопротивление)");
+
     lastUpdate = 0;
     fakeLastUpdate = 0;
     temperature = 0;
@@ -42,18 +53,18 @@ struct BME68xHub : Service::TemperatureSensor {
     fakeGas = 100000.0;
     bmeOk = false;
 
-    Wire.begin(8, 10);
-    bme.begin(BME68X_I2C_INTF, Wire);
-    if (!bme.checkStatus()) {
-      bme.setTPH();
-      uint16_t tempProf[10] = {320,100,100,100,200,200,200,320,320,320};
-      uint16_t mulProf[10] = {5,2,10,30,5,5,5,5,5,5};
-      uint16_t sharedHeatrDur = 140 - (bme.getMeasDur(BME68X_PARALLEL_MODE) / 1000);
-      bme.setHeaterProf(tempProf, mulProf, sharedHeatrDur, 10);
-      bme.setOpMode(BME68X_PARALLEL_MODE);
-      bmeOk = true;
-      LOG1("BME68x OK\n");
+    Wire.begin(8, 9); 
+    
+    if (!bme.begin(0x77, &Wire)) { 
+      LOG1("BME680 not found\n");
+      return;
     }
+    bme.setTemperatureOversampling(BME680_OS_8X);
+    bme.setHumidityOversampling(BME680_OS_2X);
+    bme.setPressureOversampling(BME680_OS_4X);
+    bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
+    bmeOk = true;
+    LOG1("BME680 OK\n");
   }
 
   void loop() {
@@ -61,20 +72,25 @@ struct BME68xHub : Service::TemperatureSensor {
     if (bmeOk) {
       if (now - lastUpdate > 5000) {
         lastUpdate = now;
-        if (bme.fetchData()) {
-          bme68xData data;
-          if (bme.getData(data) && (data.status & BME68X_NEW_DATA_MSK)) {
-            temperature = data.temperature / 100.0;
-            humidity = data.humidity / 1000.0;
-            pressure_mmHg = (data.pressure / 100.0) * 0.75006;
-            gas_resistance = data.gas_resistance;
+        
+        bme.setGasHeater(320, 150); 
 
-            temp->setVal(temperature);
-            hum->setVal(humidity);
-
-            LOG1("T%0.1f H%0.1f\n", temperature, humidity);
-          }
+        if (!bme.performReading()) {
+          LOG1("Error reading BME680\n");
+          return;
         }
+
+        temperature = bme.temperature;
+        humidity = bme.humidity;
+        pressure_mmHg = bme.pressure / 133.322f;
+        gas_resistance = bme.gas_resistance / 1000.0f; 
+
+        temp->setVal(temperature);
+        hum->setVal(humidity);
+        pressure->setVal(pressure_mmHg);
+        gas->setVal(gas_resistance);
+
+        LOG1("T%0.1f H%0.1f P%0.1f G%0.0fk\n", temperature, humidity, pressure_mmHg, gas_resistance);
       }
     } else {
       if (now - fakeLastUpdate > 10000) {
@@ -100,7 +116,6 @@ struct DoorContactSensor : Service::ContactSensor {
   SpanCharacteristic *contactState;
 
   DoorContactSensor() : Service::ContactSensor() {
-    // CurrentContactState: 0 = contacted (закрыто), 1 = not contacted (открыто)
     contactState = new Characteristic::ContactSensorState(doorOpen ? 1 : 0);
     new Characteristic::Name("Дверь");
   }
@@ -112,8 +127,7 @@ struct DoorContactSensor : Service::ContactSensor {
   }
 
   void loop() {
-    // Здесь можно добавить опрос GPIO, если геркон подключён к этой ESP32
-    // Для твоего случая состояние прилетает извне через HTTP
+    
   }
 };
 
@@ -161,7 +175,7 @@ h1{text-align:center;color:#2c3e50;}
   html += " мм рт.ст.</span></div>";
 
   html += "<div class='card'><b>VOC</b><br><span class='val'>";
-  html += (hub->bmeOk ? String(hub->gas_resistance / 1000.0, 0) : String(hub->fakeGas / 1000.0, 0));
+  html += (hub->bmeOk ? String(hub->gas_resistance, 0) : String(hub->fakeGas / 1000.0, 0));
   html += " kΩ</span></div>";
 
   html += "<div class='card'><b>Дверь</b><br><span class='val ";
@@ -187,14 +201,13 @@ h1{text-align:center;color:#2c3e50;}
     server.send(200, "text/html", html);
   });
 
-  // Обработчик /sensor1/true и /sensor1/false
   server.on("/sensor1/true", []() {
-    doorSensor->updateDoorState(true);  // дверь открыта
+    doorSensor->updateDoorState(true);  
     server.send(200, "application/json", "{\"ok\":true,\"door\":\"open\"}");
   });
 
   server.on("/sensor1/false", []() {
-    doorSensor->updateDoorState(false);  // дверь закрыта
+    doorSensor->updateDoorState(false);  
     server.send(200, "application/json", "{\"ok\":true,\"door\":\"closed\"}");
   });
 
