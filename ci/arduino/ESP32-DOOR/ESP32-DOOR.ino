@@ -5,10 +5,10 @@
 #include "esp_system.h"
 
 // --- Настройки ---
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASS";
-const char* SERVER_IP = "192.168.1.1";
-const int SERVER_PORT = 80;
+const char* ssid = "SPONGO24G";
+const char* password = "111111";
+const char* SERVER_IP = "192.168.111.126";
+const int SERVER_PORT = 8080;
 
 // Пин геркона (толькоGPIO с возможностью wakeup: 32–39 для ext0)
 const int GERKON_PIN = 34;  // GPIO34 - только ввод, подходит для wakeup

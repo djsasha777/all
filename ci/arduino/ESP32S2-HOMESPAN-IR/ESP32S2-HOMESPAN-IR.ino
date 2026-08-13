@@ -1,183 +1,425 @@
+#include <Arduino.h>
+
 #include "HomeSpan.h"
+
 #include <WiFi.h>
 #include <WebServer.h>
+
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
 
-WebServer webServer(8080);
-const int irPin = 4;  // GPIO для ИК-светодиода
-IRsend irsend(irPin);
 
-// Глобальные переменные для состояния устройств
+// =========================
+// Настройки
+// =========================
+
+constexpr uint8_t IR_PIN = 10;
+constexpr uint16_t WEB_PORT = 8080;
+
+
+// =========================
+// Объекты
+// =========================
+
+WebServer webServer(WEB_PORT);
+IRsend irsend(IR_PIN);
+
+
+// =========================
+// Состояние устройств
+// =========================
+
 bool acPower = false;
 bool heaterPower = false;
 bool tvPower = false;
 
-SpanCharacteristic *acChar;
-SpanCharacteristic *heaterChar;
-SpanCharacteristic *tvChar;
+SpanCharacteristic *acChar = nullptr;
+SpanCharacteristic *heaterChar = nullptr;
+SpanCharacteristic *tvChar = nullptr;
 
-// Функции отправки ИК-сигналов
+
+// =========================
+// Отправка ИК-команд
+// =========================
+
+// ВАЖНО:
+// 0x0220E004 — временный пример 32-битного кода.
+// Замените его на настоящий код вашего устройства.
 void sendACSignal() {
-  // Замените на коды вашего кондиционера
-  // Пример для Panasonic:
-  irsend.sendPANASONIC_AC(0x0220E004000000060200000000000000);
-  Serial.println("IR: AC signal sent");
+  irsend.sendPanasonicAC32(
+    0x0220E004,
+    32
+  );
+
+  Serial.println("IR: Panasonic AC signal sent");
 }
 
+
 void sendHeaterSignal() {
-  // Замените на коды вашего обогревателя
-  // Пример для LG:
-  irsend.sendLG(0x88C0051);
+  // Пример LG, 28 бит.
+  // Замените код на код вашего обогревателя.
+  irsend.sendLG(
+    0x088C0051,
+    28
+  );
+
   Serial.println("IR: Heater signal sent");
 }
 
+
 void sendTVSignal() {
-  // Замените на коды вашего телевизора
-  // Пример для Samsung:
-  irsend.sendSAMSUNG(0xE0E09966);
+  // Пример Samsung, 32 бита.
+  // Замените код на код вашего телевизора.
+  irsend.sendSAMSUNG(
+    0xE0E09966,
+    32
+  );
+
   Serial.println("IR: TV signal sent");
 }
+
+
+// =========================
+// HomeKit-сервисы
+// =========================
 
 struct ACService : Service::Switch {
   ACService() : Service::Switch() {
     acChar = new Characteristic::On();
     new Characteristic::Name("Кондиционер");
   }
-  
+
   boolean update() {
     bool power = acChar->getNewVal();
-    if (power) {
-      sendACSignal();
-    }
+
+    // Отправляем ИК-команду при любом изменении состояния.
+    sendACSignal();
+
     acPower = power;
-    Serial.printf("HomeKit: AC=%s\n", power?"ON":"OFF");
+
+    Serial.printf(
+      "HomeKit: AC=%s\n",
+      power ? "ON" : "OFF"
+    );
+
     return true;
   }
 };
+
 
 struct HeaterService : Service::Switch {
   HeaterService() : Service::Switch() {
     heaterChar = new Characteristic::On();
     new Characteristic::Name("Обогреватель");
   }
-  
+
   boolean update() {
     bool power = heaterChar->getNewVal();
-    if (power) {
-      sendHeaterSignal();
-    }
+
+    sendHeaterSignal();
+
     heaterPower = power;
-    Serial.printf("HomeKit: Heater=%s\n", power?"ON":"OFF");
+
+    Serial.printf(
+      "HomeKit: Heater=%s\n",
+      power ? "ON" : "OFF"
+    );
+
     return true;
   }
 };
+
 
 struct TVService : Service::Switch {
   TVService() : Service::Switch() {
     tvChar = new Characteristic::On();
     new Characteristic::Name("Телевизор");
   }
-  
+
   boolean update() {
     bool power = tvChar->getNewVal();
-    if (power) {
-      sendTVSignal();
-    }
+
+    sendTVSignal();
+
     tvPower = power;
-    Serial.printf("HomeKit: TV=%s\n", power?"ON":"OFF");
+
+    Serial.printf(
+      "HomeKit: TV=%s\n",
+      power ? "ON" : "OFF"
+    );
+
     return true;
   }
 };
 
-ACService *acService;
-HeaterService *heaterService;
-TVService *tvService;
+
+ACService *acService = nullptr;
+HeaterService *heaterService = nullptr;
+TVService *tvService = nullptr;
+
+
+// =========================
+// Web-интерфейс
+// =========================
 
 String makePage() {
   return R"rawliteral(
 <!DOCTYPE html>
-<html><head><meta charset='utf-8'><title>IR Control</title>
-<meta name='viewport' content='width=device-width, initial-scale=1'>
-<style>
-body{font-family:Arial;margin:20px;background:#222;color:#fff;text-align:center;}
-button{padding:20px 40px;font-size:22px;margin:15px;border:none;border-radius:25px;color:white;cursor:pointer;width:200px;}
-.ac{background:#2196F3;}
-.heater{background:#FF5722;}
-.tv{background:#9C27B0;}
-button:active{transform:scale(0.95);}
-#status{padding:15px;background:#333;margin:20px;border-radius:10px;font-size:18px;}
-</style></head><body>
-<h1>ИК Управление</h1>
-<button class='ac' onclick='sendCmd("ac")'>🌡️ Кондиционер</button><br>
-<button class='heater' onclick='sendCmd("heater")'>🔥 Обогреватель</button><br>
-<button class='tv' onclick='sendCmd("tv")'>📺 Телевизор</button>
-<div id='status'>Готов</div>
-<script>
-let st=document.getElementById('status');
-function sendCmd(cmd){
-  st.textContent='Отправка...';
-  st.style.background='#ff9800';
-  fetch('/cmd?dev='+cmd).then(r=>r.text()).then(d=>{
-    st.textContent='OK: '+cmd;
-    st.style.background='#4CAF50';
-  }).catch(e=>{
-    st.textContent='ERR';
-    st.style.background='#f44336';
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>IR Control</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #222;
+      color: #fff;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+    }
+
+    button {
+      padding: 20px 40px;
+      font-size: 22px;
+      margin: 15px;
+      border: none;
+      border-radius: 25px;
+      color: white;
+      cursor: pointer;
+      width: 240px;
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    .ac {
+      background: #2196F3;
+    }
+
+    .heater {
+      background: #FF5722;
+    }
+
+    .tv {
+      background: #9C27B0;
+    }
+
+    #status {
+      padding: 15px;
+      background: #333;
+      margin: 20px auto;
+      border-radius: 10px;
+      font-size: 18px;
+      max-width: 500px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>ИК-управление</h1>
+
+  <button class="ac" onclick="sendCmd('ac')">
+    🌡️ Кондиционер
+  </button>
+
+  <br>
+
+  <button class="heater" onclick="sendCmd('heater')">
+    🔥 Обогреватель
+  </button>
+
+  <br>
+
+  <button class="tv" onclick="sendCmd('tv')">
+    📺 Телевизор
+  </button>
+
+  <div id="status">Готов</div>
+
+  <script>
+    const statusElement = document.getElementById('status');
+
+    function sendCmd(device) {
+      statusElement.textContent = 'Отправка...';
+      statusElement.style.background = '#ff9800';
+
+      fetch('/cmd?dev=' + encodeURIComponent(device))
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+          }
+
+          return response.text();
+        })
+        .then(result => {
+          statusElement.textContent = 'OK: ' + device;
+          statusElement.style.background = '#4CAF50';
+        })
+        .catch(error => {
+          console.error(error);
+          statusElement.textContent = 'Ошибка';
+          statusElement.style.background = '#f44336';
+        });
+    }
+  </script>
+</body>
+</html>
+)rawliteral";
+}
+
+
+void setupWebServer() {
+  webServer.on("/", HTTP_GET, []() {
+    webServer.send(
+      200,
+      "text/html; charset=utf-8",
+      makePage()
+    );
   });
+
+
+  webServer.on("/cmd", HTTP_GET, []() {
+    if (!webServer.hasArg("dev")) {
+      webServer.send(
+        400,
+        "text/plain; charset=utf-8",
+        "Missing dev argument"
+      );
+
+      return;
+    }
+
+    String device = webServer.arg("dev");
+
+    if (device == "ac") {
+      sendACSignal();
+
+      acPower = !acPower;
+
+      if (acChar != nullptr) {
+        acChar->setVal(acPower);
+      }
+    }
+    else if (device == "heater") {
+      sendHeaterSignal();
+
+      heaterPower = !heaterPower;
+
+      if (heaterChar != nullptr) {
+        heaterChar->setVal(heaterPower);
+      }
+    }
+    else if (device == "tv") {
+      sendTVSignal();
+
+      tvPower = !tvPower;
+
+      if (tvChar != nullptr) {
+        tvChar->setVal(tvPower);
+      }
+    }
+    else {
+      webServer.send(
+        400,
+        "text/plain; charset=utf-8",
+        "Unknown device"
+      );
+
+      return;
+    }
+
+    Serial.printf(
+      "Web: command=%s\n",
+      device.c_str()
+    );
+
+    webServer.send(
+      200,
+      "text/plain; charset=utf-8",
+      "OK"
+    );
+  });
+
+  webServer.begin();
+
+  Serial.printf(
+    "Web server started: http://%s:%u\n",
+    WiFi.localIP().toString().c_str(),
+    WEB_PORT
+  );
 }
-</script></body></html>)rawliteral";
-}
+
+
+// =========================
+// setup()
+// =========================
 
 void setup() {
   Serial.begin(115200);
+  delay(500);
+
+  Serial.println();
+  Serial.println("Starting ESP32-S2 HomeSpan IR controller");
+
   irsend.begin();
-  
-  homeSpan.begin(Category::Bridges, "IR Controller");
-  
+
+  homeSpan.begin(
+    Category::Bridges,
+    "IR Controller"
+  );
+
+  // Accessory Information
   new SpanAccessory();
+
   new Service::AccessoryInformation();
   new Characteristic::Name("IR Controller");
   new Characteristic::Identify();
-  
+
+
+  // HomeKit-сервисы
   acService = new ACService();
   heaterService = new HeaterService();
   tvService = new TVService();
-  
+
+
+  // Web-сервер запускаем после подключения HomeSpan к Wi-Fi
   homeSpan.setWifiCallback([]() {
-    Serial.printf("Web: http://%s:8080\n", WiFi.localIP().toString().c_str());
-    
-    webServer.on("/", []() { 
-      webServer.send(200, "text/html", makePage()); 
-    });
-    
-    webServer.on("/cmd", []() {
-      if (webServer.hasArg("dev")) {
-        String dev = webServer.arg("dev");
-        if (dev == "ac") {
-          sendACSignal();
-          acChar->setVal(!acChar->getVal());
-        } else if (dev == "heater") {
-          sendHeaterSignal();
-          heaterChar->setVal(!heaterChar->getVal());
-        } else if (dev == "tv") {
-          sendTVSignal();
-          tvChar->setVal(!tvChar->getVal());
-        }
-        Serial.printf("Web: Command %s\n", dev.c_str());
-      }
-      webServer.send(200, "text/plain", "OK");
-    });
-    
-    webServer.begin();
+    Serial.printf(
+      "Wi-Fi connected: %s\n",
+      WiFi.localIP().toString().c_str()
+    );
+
+    static bool webServerStarted = false;
+
+    if (!webServerStarted) {
+      setupWebServer();
+      webServerStarted = true;
+    }
   });
+
+  Serial.println("Setup completed");
 }
+
+
+// =========================
+// loop()
+// =========================
 
 void loop() {
   homeSpan.poll();
-  static unsigned long lastCheck = 0;
-  if (millis() - lastCheck > 20) {
+
+  static uint32_t lastWebCheck = 0;
+  uint32_t now = millis();
+
+  if (now - lastWebCheck >= 20) {
     webServer.handleClient();
-    lastCheck = millis();
+    lastWebCheck = now;
   }
 }
