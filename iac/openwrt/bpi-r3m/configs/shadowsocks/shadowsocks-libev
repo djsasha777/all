@@ -1,5 +1,5 @@
 config server 'ss_server'
-	option server '212.193.2.110'
+	option server '91.149.218.21'
 	option server_port '14800'
 	option password 'CHANGE-THIS-PASS'
 	option method 'aes-256-gcm'
