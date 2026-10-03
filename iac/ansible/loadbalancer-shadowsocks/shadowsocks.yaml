@@ -41,6 +41,12 @@
         dest: /usr/local/bin
         remote_src: yes
 
+    - name: Rename v2ray-plugin binary
+      ansible.builtin.command: mv v2ray-plugin_linux_amd64 v2ray-plugin
+      args:
+        chdir: /usr/local/bin
+        creates: /usr/local/bin/v2ray-plugin
+        
     - name: Set executable permission on v2ray-plugin
       ansible.builtin.file:
         path: /usr/local/bin/v2ray-plugin
