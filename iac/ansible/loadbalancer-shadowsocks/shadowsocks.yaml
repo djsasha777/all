@@ -9,12 +9,36 @@
       ansible.builtin.apt:
         update_cache: yes
 
-    - name: install packages
+    - name: install prerequisites
+      ansible.builtin.apt:
+        name:
+          - curl
+          - gnupg
+          - apt-transport-https
+          - ca-certificates
+        state: present
+
+    - name: Add v2ray APT key
+      ansible.builtin.apt_key:
+        url: https://raw.githubusercontent.com/v2fly/v2ray-core/master/release/verifier_2023.asc
+        state: present
+
+    - name: Add v2ray repository
+      ansible.builtin.apt_repository:
+        repo: "deb https://repo.v2fly.org/deb {{ ansible_distribution_release }} stable"
+        state: present
+        filename: v2ray
+
+    - name: apt update after adding repo
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: install shadowsocks and v2ray-plugin
       ansible.builtin.apt:
         name:
           - shadowsocks-libev
           - openssl
-          - shadowsocks-libev-plugin-obfs
+          - v2ray-plugin
         state: present
 
     - name: Ensure SSL directory exists
@@ -32,7 +56,7 @@
       ansible.builtin.command: >
         openssl req -x509 -newkey rsa:2048 -keyout /etc/shadowsocks-libev/ssl/server.key
         -out /etc/shadowsocks-libev/ssl/server.crt -days 365 -nodes
-        -subj "/CN=shadowsocks-server"
+        -subj "/CN={{ dnsName }}"
       args:
         creates: /etc/shadowsocks-libev/ssl/server.crt
       when: not cert_stat.stat.exists
