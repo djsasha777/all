@@ -49,10 +49,28 @@
         mode: '0755'
 
     # --- Установка obfs-local (obfs4) ---
-    - name: Install obfs4proxy from apt repository
-      ansible.builtin.apt:
-        name: obfs4proxy
-        state: present
+    - name: Download and install official obfs4proxy binary
+      block:
+        - name: Download obfs4proxy static build
+          ansible.builtin.get_url:
+            url: https://dist.torproject.org/obfs4proxy/obfs4proxy-0.0.14-linux-amd64.tgz
+            dest: /tmp/obfs4proxy.tgz
+            mode: '0644'
+
+        - name: Extract obfs4proxy
+          ansible.builtin.unarchive:
+            src: /tmp/obfs4proxy.tgz
+            dest: /usr/local/bin
+            remote_src: yes
+            extra_opts: [--strip-components=0] # В архиве бинарник в корне
+
+        - name: Rename binary to obfs4proxy
+          ansible.builtin.copy:
+            src: /usr/local/bin/obfs4proxy
+            dest: /usr/local/bin/obfs4proxy
+            mode: '0755'
+            remote_src: yes
+      when: obfsEnabled
 
     # --- SSL директория ---
     - name: Ensure SSL directory exists
