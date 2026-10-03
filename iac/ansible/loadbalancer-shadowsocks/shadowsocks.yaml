@@ -72,6 +72,14 @@
         creates: /etc/shadowsocks-libev/ssl/server.crt
       when: not cert_stat.stat.exists
 
+    - name: Set correct ownership for SSL files
+      ansible.builtin.file:
+        path: /etc/shadowsocks-libev/ssl
+        owner: shadowsocks
+        group: shadowsocks
+        recurse: yes
+        mode: '0750' # Директория: вход и чтение для владельца и группы
+
     - name: Ensure shadowsocks conf is set
       template: 
         src: templates/ss.config.json.j2 
