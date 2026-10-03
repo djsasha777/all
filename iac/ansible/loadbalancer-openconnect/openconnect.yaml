@@ -153,3 +153,4 @@
       ansible.builtin.command:
         cmd: iptables -t nat -A POSTROUTING -s {{ openconnect.ipNetwork }}/24 -o eth0 -j MASQUERADE
       when: nat_rule_exists.rc is defined and nat_rule_exists.rc != 0
+      
