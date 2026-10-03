@@ -53,7 +53,7 @@
       block:
         - name: Download obfs4proxy static build
           ansible.builtin.get_url:
-            url: https://dist.torproject.org/obfs4proxy/obfs4proxy-0.0.14-linux-amd64.tgz
+            url: https://dist.torproject.org/obfs4proxy/obfs4proxy-0.0.15-linux-amd64.tgz
             dest: /tmp/obfs4proxy.tgz
             mode: '0644'
 
@@ -62,7 +62,7 @@
             src: /tmp/obfs4proxy.tgz
             dest: /usr/local/bin
             remote_src: yes
-            extra_opts: [--strip-components=0] # В архиве бинарник в корне
+            extra_opts: [--strip-components=0]
 
         - name: Rename binary to obfs4proxy
           ansible.builtin.copy:
