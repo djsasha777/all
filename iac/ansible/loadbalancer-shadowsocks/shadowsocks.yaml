@@ -9,37 +9,42 @@
       ansible.builtin.apt:
         update_cache: yes
 
-    - name: install prerequisites
-      ansible.builtin.apt:
-        name:
-          - curl
-          - gnupg
-          - apt-transport-https
-          - ca-certificates
-        state: present
-
-    - name: Add v2ray APT key
-      ansible.builtin.apt_key:
-        url: https://raw.githubusercontent.com/v2fly/v2ray-core/master/release/verifier_2023.asc
-        state: present
-
-    - name: Add v2ray repository
-      ansible.builtin.apt_repository:
-        repo: "deb https://repo.v2fly.org/deb {{ ansible_distribution_release }} stable"
-        state: present
-        filename: v2ray
-
-    - name: apt update after adding repo
-      ansible.builtin.apt:
-        update_cache: yes
-
-    - name: install shadowsocks and v2ray-plugin
+    - name: install shadowsocks and dependencies
       ansible.builtin.apt:
         name:
           - shadowsocks-libev
           - openssl
-          - v2ray-plugin
+          - curl
         state: present
+
+    - name: Get latest v2ray-plugin release info
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/teddysun/v2ray-plugin/releases/latest
+        return_content: yes
+        headers:
+          Accept: application/vnd.github.v3+json
+      register: v2ray_release
+
+    - name: Set v2ray-plugin version fact
+      ansible.builtin.set_fact:
+        v2ray_version: "{{ (v2ray_release.json.tag_name | regex_replace('^v', '')) }}"
+
+    - name: Download v2ray-plugin
+      ansible.builtin.get_url:
+        url: "https://github.com/teddysun/v2ray-plugin/releases/download/v{{ v2ray_version }}/v2ray-plugin_linux_amd64.tar.gz"
+        dest: /tmp/v2ray-plugin.tar.gz
+        mode: '0644'
+
+    - name: Extract v2ray-plugin
+      ansible.builtin.unarchive:
+        src: /tmp/v2ray-plugin.tar.gz
+        dest: /usr/local/bin
+        remote_src: yes
+
+    - name: Set executable permission on v2ray-plugin
+      ansible.builtin.file:
+        path: /usr/local/bin/v2ray-plugin
+        mode: '0755'
 
     - name: Ensure SSL directory exists
       ansible.builtin.file:
