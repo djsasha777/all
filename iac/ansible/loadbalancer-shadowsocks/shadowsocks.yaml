@@ -51,9 +51,9 @@
     # --- Установка obfs-local (obfs4) ---
     - name: Download and install official obfs4proxy binary
       block:
-        - name: Download obfs4proxy static build
+        - name: Download obfs4proxy static build (v0.0.17)
           ansible.builtin.get_url:
-            url: https://dist.torproject.org/obfs4proxy/obfs4proxy-0.0.15-linux-amd64.tgz
+            url: https://dist.torproject.org/obfs4proxy/obfs4proxy-0.0.17-linux-amd64.tgz
             dest: /tmp/obfs4proxy.tgz
             mode: '0644'
 
@@ -64,12 +64,10 @@
             remote_src: yes
             extra_opts: [--strip-components=0]
 
-        - name: Rename binary to obfs4proxy
-          ansible.builtin.copy:
-            src: /usr/local/bin/obfs4proxy
-            dest: /usr/local/bin/obfs4proxy
+        - name: Set executable permission on obfs4proxy
+          ansible.builtin.file:
+            path: /usr/local/bin/obfs4proxy
             mode: '0755'
-            remote_src: yes
       when: obfsEnabled
 
     # --- SSL директория ---
