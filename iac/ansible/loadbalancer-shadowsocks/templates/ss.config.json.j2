@@ -8,7 +8,7 @@
     "timeout": 86400,
     "method": "aes-256-gcm",
     "plugin": "/usr/bin/obfs4proxy",
-    "plugin_opts": "obfs=tls;obfs-host={{ dnsNameObfs }};cert=/etc/shadowsocks-libev/ssl/serverobfs.crt;key=/etc/shadowsocks-libev/ssl/serverobfs.key"
+    "plugin_opts": "obfs4;server;cert=/etc/shadowsocks-libev/ssl/serverobfs.crt;key=/etc/shadowsocks-libev/ssl/serverobfs.key;iat-mode=0"
 }
 {% elif v2Enabled %}
 {
