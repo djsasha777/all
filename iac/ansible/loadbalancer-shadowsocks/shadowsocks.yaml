@@ -60,21 +60,19 @@
       ansible.builtin.git:
         repo: https://github.com/Yawning/obfs4.git
         dest: /tmp/obfs4-build/obfs4
-        version: obfs4proxy-0.0.17
-        depth: 1
+        version: obfs4proxy-0.0.14
 
     - name: Build obfs4proxy
       ansible.builtin.command:
         cmd: go build -o /tmp/obfs4-build/obfs4proxy ./obfs4proxy
         chdir: /tmp/obfs4-build/obfs4
       environment:
-        GOFLAGS: "-mod=mod"
         CGO_ENABLED: "0"
       changed_when: true
 
     - name: Install obfs4proxy
       ansible.builtin.copy:
-        src: /tmp/obfs4-build/obfs4proxy
+        src: /tmp/obfs4-build/obfs4
         dest: /usr/local/bin/obfs4proxy
         mode: "0755"
         remote_src: true
