@@ -1,5 +1,5 @@
 ---
-- name: install shadowsocks
+- name: install shadowsocks with obfs and v2ray
   hosts: localhost
   vars:
     ansible_user: root
@@ -17,6 +17,7 @@
           - curl
         state: present
 
+    # --- Установка v2ray-plugin ---
     - name: Get latest v2ray-plugin release info
       ansible.builtin.uri:
         url: https://api.github.com/repos/shadowsocks/v2ray-plugin/releases/latest
@@ -52,39 +53,108 @@
         path: /usr/local/bin/v2ray-plugin
         mode: '0755'
 
+    # --- Установка obfs-local (obfs4) ---
+    - name: Get latest obfs4proxy release info
+      ansible.builtin.uri:
+        url: https://api.github.com/refraction-networking/obfs4/releases/latest
+        return_content: yes
+        headers:
+          Accept: application/vnd.github.v3+json
+      register: obfs_release
+
+    - name: Set obfs4proxy version fact
+      ansible.builtin.set_fact:
+        obfs_version: "{{ obfs_release.json.tag_name }}"
+
+    - name: Download obfs4proxy
+      ansible.builtin.get_url:
+        url: "https://github.com/refraction-networking/obfs4/releases/download/{{ obfs_version }}/obfs4proxy-{{ obfs_version }}.tgz"
+        dest: /tmp/obfs4proxy.tgz
+        mode: '0644'
+
+    - name: Extract obfs4proxy
+      ansible.builtin.unarchive:
+        src: /tmp/obfs4proxy.tgz
+        dest: /usr/local/bin
+        remote_src: yes
+        extra_opts: [--strip-components=1]
+
+    - name: Rename obfs4proxy binary
+      ansible.builtin.command: mv obfs4proxy /usr/local/bin/obfs-local
+      args:
+        creates: /usr/local/bin/obfs-local
+
+    - name: Set executable permission on obfs-local
+      ansible.builtin.file:
+        path: /usr/local/bin/obfs-local
+        mode: '0755'
+
+    # --- SSL директория ---
     - name: Ensure SSL directory exists
       ansible.builtin.file:
         path: /etc/shadowsocks-libev/ssl
         state: directory
         mode: '0755'
 
-    - name: Check if certificate and key already exist
+    # --- Сертификаты для v2ray ---
+    - name: Check if v2ray certificate and key already exist
       ansible.builtin.stat:
-        path: /etc/shadowsocks-libev/ssl/server.crt
-      register: cert_stat
+        path: /etc/shadowsocks-libev/ssl/serverv2.crt
+      register: cert_v2_stat
 
-    - name: Generate self-signed certificate and key
+    - name: Generate self-signed certificate for v2ray
       ansible.builtin.command: >
-        openssl req -x509 -newkey rsa:2048 -keyout /etc/shadowsocks-libev/ssl/server.key
-        -out /etc/shadowsocks-libev/ssl/server.crt -days 365 -nodes
-        -subj "/CN={{ dnsName }}"
+        openssl req -x509 -newkey rsa:2048 -keyout /etc/shadowsocks-libev/ssl/serverv2.key
+        -out /etc/shadowsocks-libev/ssl/serverv2.crt -days 365 -nodes
+        -subj "/CN={{ dnsNameV2ray }}"
       args:
-        creates: /etc/shadowsocks-libev/ssl/server.crt
-      when: not cert_stat.stat.exists
+        creates: /etc/shadowsocks-libev/ssl/serverv2.crt
+      when: not cert_v2_stat.stat.exists
+
+    # --- Сертификаты для obfs (для совместимости с клиентами, ожидающими TLS на 443) ---
+    - name: Check if obfs certificate and key already exist
+      ansible.builtin.stat:
+        path: /etc/shadowsocks-libev/ssl/serverobfs.crt
+      register: cert_obfs_stat
+
+    - name: Generate self-signed certificate for obfs
+      ansible.builtin.command: >
+        openssl req -x509 -newkey rsa:2048 -keyout /etc/shadowsocks-libev/ssl/serverobfs.key
+        -out /etc/shadowsocks-libev/ssl/serverobfs.crt -days 365 -nodes
+        -subj "/CN={{ dnsNameObfs }}"
+      args:
+        creates: /etc/shadowsocks-libev/ssl/serverobfs.crt
+      when: not cert_obfs_stat.stat.exists
 
     - name: Set correct ownership for SSL files
       ansible.builtin.file:
         path: /etc/shadowsocks-libev/ssl
         recurse: yes
-        mode: '0755' # Директория: вход и чтение для владельца и группы
+        mode: '0600' # Приватные ключи должны быть доступны только владельцу
 
-    - name: Ensure shadowsocks conf is set
+    # --- Шаблон конфигурации (будет разделен на два файла задачами ниже) ---
+    - name: Ensure shadowsocks obfs conf is set
       template: 
-        src: templates/ss.config.json.j2 
-        dest: /etc/shadowsocks-libev/config.json
+        src: templates/ss-obfs.config.json.j2 
+        dest: /etc/shadowsocks-libev/obfs.json
+      notify: Restart obfs ss service
 
-    - name: Ensure shadowsocks is restarted
-      service:  
-        name: shadowsocks-libev
+    - name: Ensure shadowsocks v2ray conf is set
+      template: 
+        src: templates/ss-v2ray.config.json.j2 
+        dest: /etc/shadowsocks-libev/v2ray.json
+      notify: Restart v2ray ss service
+
+  # --- Обработчики для двух разных сервисов ---
+  handlers:
+    - name: Restart obfs ss service
+      ansible.builtin.service:
+        name: shadowsocks-libev-obfs
+        state: restarted
+        enabled: yes
+
+    - name: Restart v2ray ss service
+      ansible.builtin.service:
+        name: shadowsocks-libev-v2ray
         state: restarted
         enabled: yes

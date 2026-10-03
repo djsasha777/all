@@ -1,4 +1,6 @@
 ---
-dnsName: shadow.spongo.ru
+dnsNameObfs: shadow.spongo.ru
+dnsNameV2ray: v2.spongo.ru
 dnsIp: 213.182.204.227
-tlsEnabled: true
+obfsEnabled: true
+v2Enabled: false

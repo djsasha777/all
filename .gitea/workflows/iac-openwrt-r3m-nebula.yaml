@@ -1,0 +1,15 @@
+name: openwrt-bpi-r3m-nginx
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - iac/openwrt/bpi-r3m/config/nebula/**
+  workflow_dispatch:
+jobs:
+  provision:
+    runs-on: linux/arm
+    steps:
+      - name: Run script
+        run: |
+          echo "files copied and nebula restarted."
+        shell: bash

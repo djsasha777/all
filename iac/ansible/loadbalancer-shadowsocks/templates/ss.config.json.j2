@@ -1,4 +1,4 @@
-{% if tlsEnabled %}
+{% if obfsEnabled %}
 {
     "server": ["127.0.0.1"],
     "mode": "tcp",
@@ -7,17 +7,29 @@
     "password": "{{ sspassword }}",
     "timeout": 86400,
     "method": "aes-256-gcm",
-    "plugin": "v2ray-plugin",
-    "plugin_opts": "server;tls;host={{ dnsName }};cert=/etc/shadowsocks-libev/ssl/server.crt;key=/etc/shadowsocks-libev/ssl/server.key"
+    "plugin": "/usr/local/bin/obfs-local",
+    "plugin_opts": "obfs=tls;obfs-host={{ dnsNameObfs }};cert=/etc/shadowsocks-libev/ssl/serverobfs.crt;key=/etc/shadowsocks-libev/ssl/serverobfs.key"
+}
+{% elif v2Enabled %}
+{
+    "server": ["0.0.0.0"],
+    "mode": "tcp",
+    "server_port": 14802,
+    "local_port": 2082,
+    "password": "{{ sspassword }}",
+    "timeout": 86400,
+    "method": "aes-256-gcm",
+    "plugin": "/usr/local/bin/v2ray-plugin",
+    "plugin_opts": "server;tls;host={{ dnsNameV2ray }};cert=/etc/shadowsocks-libev/ssl/serverv2.crt;key=/etc/shadowsocks-libev/ssl/serverv2.key"
 }
 {% else %}
 {
-    "server":["0.0.0.0"],
-    "mode":"tcp",
-    "server_port":14800,
-    "local_port":2080,
+    "server": ["0.0.0.0"],
+    "mode": "tcp",
+    "server_port": 14800,
+    "local_port": 2080,
     "password": "{{ sspassword }}",
-    "timeout":86400,
-    "method":"aes-256-gcm"
+    "timeout": 86400,
+    "method": "aes-256-gcm"
 }
 {% endif %}
