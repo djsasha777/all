@@ -7,8 +7,8 @@
     "password": "{{ sspassword }}",
     "timeout": 86400,
     "method": "aes-256-gcm",
-    "plugin": "/usr/local/bin/obfs4proxy",
-    "plugin_opts": "obfs4;server;cert=/etc/shadowsocks-libev/ssl/serverobfs.crt;key=/etc/shadowsocks-libev/ssl/serverobfs.key;iat-mode=0"
+    "plugin": "/usr/bin/obfs-server",
+    "plugin_opts": "obfs=tls;obfs-host=shadow.spongo.ru;cert=/etc/shadowsocks-libev/ssl/serverobfs.crt;key=/etc/shadowsocks-libev/ssl/serverobfs.key;iat-mode=0"
 }
 {% elif v2Enabled %}
 {

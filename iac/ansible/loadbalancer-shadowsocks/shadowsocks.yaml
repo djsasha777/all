@@ -16,6 +16,7 @@
           - openssl
           - curl
           - golang-go
+          - simple-obfs
         state: present
 
     # --- Установка v2ray-plugin ---
