@@ -50,34 +50,6 @@
         path: /usr/local/bin/v2ray-plugin
         mode: '0755'
 
-    # --- Установка obfs-local (obfs4) ---
-    - name: Create build directory
-      ansible.builtin.file:
-        path: /tmp/obfs4-build
-        state: directory
-        mode: "0755"
-
-    - name: Clone obfs4 source
-      ansible.builtin.git:
-        repo: https://github.com/Yawning/obfs4.git
-        dest: /tmp/obfs4-build/obfs4
-        version: obfs4proxy-0.0.14
-
-    - name: Build obfs4proxy
-      ansible.builtin.command:
-        cmd: go build -o /tmp/obfs4-build/obfs4proxy ./obfs4proxy
-        chdir: /tmp/obfs4-build/obfs4
-      environment:
-        CGO_ENABLED: "0"
-      changed_when: true
-
-    - name: Install obfs4proxy binary
-      ansible.builtin.copy:
-        src: /tmp/obfs4-build/obfs4proxy
-        dest: /usr/local/bin/obfs4proxy
-        mode: "0755"
-        remote_src: true
-
     # --- SSL директория ---
     - name: Ensure SSL directory exists
       ansible.builtin.file:
