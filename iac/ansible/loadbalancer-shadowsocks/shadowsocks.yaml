@@ -15,6 +15,7 @@
           - shadowsocks-libev
           - openssl
           - curl
+          - golang-go
         state: present
 
     # --- Установка v2ray-plugin ---
@@ -49,27 +50,34 @@
         mode: '0755'
 
     # --- Установка obfs-local (obfs4) ---
-    - name: Download and install official obfs4proxy binary from GitHub
-      block:
-        - name: Download obfs4proxy archive (v0.0.17)
-          ansible.builtin.get_url:
-            url: https://github.com/Yawning/obfs4/releases/download/v0.0.17/obfs4proxy-0.0.17-linux-amd64.tgz
-            dest: /tmp/obfs4proxy.tgz
-            mode: '0644'
-            timeout: 30
+    - name: Create build directory
+      ansible.builtin.file:
+        path: /tmp/obfs4-build
+        state: directory
+        mode: "0755"
 
-        - name: Extract obfs4proxy
-          ansible.builtin.unarchive:
-            src: /tmp/obfs4proxy.tgz
-            dest: /usr/local/bin
-            remote_src: yes
-            extra_opts: [--strip-components=1] # Убираем лишнюю папку из архива
+    - name: Clone obfs4 source
+      ansible.builtin.git:
+        repo: https://github.com/Yawning/obfs4.git
+        dest: /tmp/obfs4-build/obfs4
+        version: obfs4proxy-0.0.17
+        depth: 1
 
-        - name: Set executable permission on obfs4proxy
-          ansible.builtin.file:
-            path: /usr/local/bin/obfs4proxy
-            mode: '0755'
-      when: obfsEnabled
+    - name: Build obfs4proxy
+      ansible.builtin.command:
+        cmd: go build -o /tmp/obfs4-build/obfs4proxy ./obfs4proxy
+        chdir: /tmp/obfs4-build/obfs4
+      environment:
+        GOFLAGS: "-mod=mod"
+        CGO_ENABLED: "0"
+      changed_when: true
+
+    - name: Install obfs4proxy
+      ansible.builtin.copy:
+        src: /tmp/obfs4-build/obfs4proxy
+        dest: /usr/local/bin/obfs4proxy
+        mode: "0755"
+        remote_src: true
 
     # --- SSL директория ---
     - name: Ensure SSL directory exists
