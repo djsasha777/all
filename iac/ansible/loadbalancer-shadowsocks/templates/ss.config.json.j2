@@ -7,8 +7,8 @@
     "password": "{{ sspassword }}",
     "timeout": 86400,
     "method": "aes-256-gcm",
-    "plugin": "obfs-server",
-    "plugin_opts": "obfs=tls;obfs-host={{ dnsName }};cert=/etc/shadowsocks-libev/ssl/server.crt;key=/etc/shadowsocks-libev/ssl/server.key"
+    "plugin": "v2ray-plugin",
+    "plugin_opts": "server;tls;host={{ dnsName }};cert=/etc/shadowsocks-libev/ssl/server.crt;key=/etc/shadowsocks-libev/ssl/server.key"
 }
 {% else %}
 {
