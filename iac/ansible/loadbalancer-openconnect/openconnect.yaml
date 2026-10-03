@@ -52,13 +52,6 @@
           - ocserv
         state: present
 
-    - name: template openconnect service
-      template: 
-        src: templates/ocserv.service.tmpl.j2
-        dest: /etc/systemd/system/ocserv.service
-      notify:
-        - reDemon
-
     - name: Create openconnect config directory
       ansible.builtin.file:
         path: "/etc/openconnect"
