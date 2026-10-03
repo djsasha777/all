@@ -76,7 +76,7 @@
       ansible.builtin.file:
         path: /etc/shadowsocks-libev/ssl
         recurse: yes
-        mode: '0750' # Директория: вход и чтение для владельца и группы
+        mode: '0755' # Директория: вход и чтение для владельца и группы
 
     - name: Ensure shadowsocks conf is set
       template: 
