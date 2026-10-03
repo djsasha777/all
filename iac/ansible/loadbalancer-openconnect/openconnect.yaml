@@ -49,22 +49,8 @@
           - iproute2
           - yajl-tools
           - tcpdump
+          - ocserv
         state: present
-
-    - name: Download code
-      ansible.builtin.command:
-        cmd: >-
-          git clone https://gitlab.com/openconnect/ocserv.git
-        creates: "ocserv"
-
-    - name: build
-      ansible.builtin.command:
-        cmd: >-
-          cd ocserv
-          autoreconf -fvi
-          ./configure && make
-          make install
-        creates: "/lib/systemd/system/ocserv.service"
 
     - name: template openconnect service
       template: 
