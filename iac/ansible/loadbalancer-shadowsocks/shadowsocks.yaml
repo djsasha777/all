@@ -25,29 +25,24 @@
         headers:
           Accept: application/vnd.github.v3+json
       register: v2ray_release
-
     - name: Set v2ray-plugin version fact
       ansible.builtin.set_fact:
         v2ray_version: "{{ v2ray_release.json.tag_name }}"
-
     - name: Download v2ray-plugin
       ansible.builtin.get_url:
         url: "https://github.com/shadowsocks/v2ray-plugin/releases/download/{{ v2ray_version }}/v2ray-plugin-linux-amd64-{{ v2ray_version }}.tar.gz"
         dest: /tmp/v2ray-plugin.tar.gz
         mode: '0644'
-
     - name: Extract v2ray-plugin
       ansible.builtin.unarchive:
         src: /tmp/v2ray-plugin.tar.gz
         dest: /usr/local/bin
         remote_src: yes
-
     - name: Rename v2ray-plugin binary
       ansible.builtin.command: mv v2ray-plugin_linux_amd64 v2ray-plugin
       args:
         chdir: /usr/local/bin
         creates: /usr/local/bin/v2ray-plugin
-        
     - name: Set executable permission on v2ray-plugin
       ansible.builtin.file:
         path: /usr/local/bin/v2ray-plugin
@@ -71,7 +66,6 @@
       ansible.builtin.stat:
         path: /etc/shadowsocks-libev/ssl/serverv2.crt
       register: cert_v2_stat
-
     - name: Generate self-signed certificate for v2ray
       ansible.builtin.command: >
         openssl req -x509 -newkey rsa:2048 -keyout /etc/shadowsocks-libev/ssl/serverv2.key
@@ -81,12 +75,11 @@
         creates: /etc/shadowsocks-libev/ssl/serverv2.crt
       when: not cert_v2_stat.stat.exists
 
-    # --- Сертификаты для obfs (для совместимости с клиентами, ожидающими TLS на 443) ---
+    # --- Сертификаты для obfs ---
     - name: Check if obfs certificate and key already exist
       ansible.builtin.stat:
         path: /etc/shadowsocks-libev/ssl/serverobfs.crt
       register: cert_obfs_stat
-
     - name: Generate self-signed certificate for obfs
       ansible.builtin.command: >
         openssl req -x509 -newkey rsa:2048 -keyout /etc/shadowsocks-libev/ssl/serverobfs.key
@@ -100,31 +93,18 @@
       ansible.builtin.file:
         path: /etc/shadowsocks-libev/ssl
         recurse: yes
-        mode: '0600' # Приватные ключи должны быть доступны только владельцу
+        mode: '0600'
 
-    # --- Шаблон конфигурации (будет разделен на два файла задачами ниже) ---
-    - name: Ensure shadowsocks obfs conf is set
+    # --- Применение шаблона ---
+    - name: Ensure shadowsocks conf is set
       template: 
-        src: templates/ss-obfs.config.json.j2 
-        dest: /etc/shadowsocks-libev/obfs.json
-      notify: Restart obfs ss service
+        src: templates/ss.config.json.j2 
+        dest: /etc/shadowsocks-libev/config.json
+      notify: Restart ss service
 
-    - name: Ensure shadowsocks v2ray conf is set
-      template: 
-        src: templates/ss-v2ray.config.json.j2 
-        dest: /etc/shadowsocks-libev/v2ray.json
-      notify: Restart v2ray ss service
-
-  # --- Обработчики для двух разных сервисов ---
   handlers:
-    - name: Restart obfs ss service
+    - name: Restart ss service
       ansible.builtin.service:
-        name: shadowsocks-libev-obfs
-        state: restarted
-        enabled: yes
-
-    - name: Restart v2ray ss service
-      ansible.builtin.service:
-        name: shadowsocks-libev-v2ray
+        name: shadowsocks-libev
         state: restarted
         enabled: yes
