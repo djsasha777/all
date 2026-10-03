@@ -16,7 +16,7 @@ jobs:
 
         scp -r all/iac/ansible/loadbalancer-openconnect root@213.182.204.227:/root/
 
-        ssh -T root@213.182.204.227 << 'EOF'
+        ssh -T root@ << 'EOF'
         set -e
         cd /root/loadbalancer-openconnect
         ansible-playbook openconnect.yaml

@@ -13,8 +13,29 @@
       ansible.builtin.apt:
         name:
           - shadowsocks-libev
+          - openssl
         state: present
-        
+
+    - name: Ensure SSL directory exists
+      ansible.builtin.file:
+        path: /etc/shadowsocks-libev/ssl
+        state: directory
+        mode: '0755'
+
+    - name: Check if certificate and key already exist
+      ansible.builtin.stat:
+        path: /etc/shadowsocks-libev/ssl/server.crt
+      register: cert_stat
+
+    - name: Generate self-signed certificate and key
+      ansible.builtin.command: >
+        openssl req -x509 -newkey rsa:2048 -keyout /etc/shadowsocks-libev/ssl/server.key
+        -out /etc/shadowsocks-libev/ssl/server.crt -days 365 -nodes
+        -subj "/CN=shadowsocks-server"
+      args:
+        creates: /etc/shadowsocks-libev/ssl/server.crt
+      when: not cert_stat.stat.exists
+
     - name: Ensure shadowsocks conf is set
       template: 
         src: templates/ss.config.json.j2 
