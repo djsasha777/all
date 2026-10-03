@@ -54,40 +54,10 @@
         mode: '0755'
 
     # --- Установка obfs-local (obfs4) ---
-    - name: Get latest obfs4proxy release info
-      ansible.builtin.uri:
-        url: https://api.github.com/refraction-networking/obfs4/releases/latest
-        return_content: yes
-        headers:
-          Accept: application/vnd.github.v3+json
-      register: obfs_release
-
-    - name: Set obfs4proxy version fact
-      ansible.builtin.set_fact:
-        obfs_version: "{{ obfs_release.json.tag_name }}"
-
-    - name: Download obfs4proxy
-      ansible.builtin.get_url:
-        url: "https://github.com/refraction-networking/obfs4/releases/download/{{ obfs_version }}/obfs4proxy-{{ obfs_version }}.tgz"
-        dest: /tmp/obfs4proxy.tgz
-        mode: '0644'
-
-    - name: Extract obfs4proxy
-      ansible.builtin.unarchive:
-        src: /tmp/obfs4proxy.tgz
-        dest: /usr/local/bin
-        remote_src: yes
-        extra_opts: [--strip-components=1]
-
-    - name: Rename obfs4proxy binary
-      ansible.builtin.command: mv obfs4proxy /usr/local/bin/obfs-local
-      args:
-        creates: /usr/local/bin/obfs-local
-
-    - name: Set executable permission on obfs-local
-      ansible.builtin.file:
-        path: /usr/local/bin/obfs-local
-        mode: '0755'
+    - name: Install obfs4proxy from apt repository
+      ansible.builtin.apt:
+        name: obfs4proxy
+        state: present
 
     # --- SSL директория ---
     - name: Ensure SSL directory exists

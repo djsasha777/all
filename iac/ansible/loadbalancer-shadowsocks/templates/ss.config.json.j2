@@ -7,7 +7,7 @@
     "password": "{{ sspassword }}",
     "timeout": 86400,
     "method": "aes-256-gcm",
-    "plugin": "/usr/local/bin/obfs-local",
+    "plugin": "/usr/bin/obfs4proxy",
     "plugin_opts": "obfs=tls;obfs-host={{ dnsNameObfs }};cert=/etc/shadowsocks-libev/ssl/serverobfs.crt;key=/etc/shadowsocks-libev/ssl/serverobfs.key"
 }
 {% elif v2Enabled %}
