@@ -54,4 +54,3 @@ firewall:
     - port: any
       proto: any
       host: any
-      
