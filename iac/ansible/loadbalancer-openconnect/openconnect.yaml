@@ -49,9 +49,46 @@
           - iproute2
           - yajl-tools
           - tcpdump
-          - ocserv
+          # build tools
+          - build-essential
+          - meson
+          - ninja-build
+          - pkg-config
+          - libtasn1-bin
         state: present
 
+    # --- Сборка ocserv из исходников ---
+    - name: Clone ocserv source
+      ansible.builtin.git:
+        repo: https://github.com/openconnect/ocserv.git
+        dest: /usr/src/ocserv
+        version: master
+        force: yes
+
+    - name: Build ocserv with meson
+      ansible.builtin.shell:
+        cmd: |
+          set -e
+          cd /usr/src/ocserv
+          meson setup build --prefix=/usr
+          ninja -C build
+        creates: /usr/src/ocserv/build/ocserv
+
+    - name: Install ocserv
+      ansible.builtin.shell:
+        cmd: |
+          set -e
+          cd /usr/src/ocserv
+          ninja -C build install
+        creates: /usr/sbin/ocserv
+
+    - name: Ensure ocserv binary exists
+      ansible.builtin.stat:
+        path: /usr/sbin/ocserv
+      register: ocserv_bin
+      failed_when: not ocserv_bin.stat.exists
+
+    # --- Дальше твоя логика с сертификатами и конфигом ---
     - name: Create openconnect config directory
       ansible.builtin.file:
         path: "/etc/openconnect"
@@ -153,4 +190,3 @@
       ansible.builtin.command:
         cmd: iptables -t nat -A POSTROUTING -s {{ openconnect.ipNetwork }}/24 -o eth0 -j MASQUERADE
       when: nat_rule_exists.rc is defined and nat_rule_exists.rc != 0
-      
