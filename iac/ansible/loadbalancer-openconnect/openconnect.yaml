@@ -149,6 +149,12 @@
           certtool --generate-certificate --load-privkey /etc/openconnect/server-key.pem --load-ca-certificate /etc/openconnect/ca-cert.pem --load-ca-privkey /etc/openconnect/ca-key.pem --template /etc/openconnect/oc.server.tmpl --outfile /etc/openconnect/server-cert.pem
         creates: "/etc/openconnect/server-cert.pem"
 
+    - name: Create ocserv config directory
+      ansible.builtin.file:
+        path: "/etc/ocserv"
+        state: directory
+        mode: "0755"
+
     - name: template config
       template: 
         src: templates/oc.config.j2
