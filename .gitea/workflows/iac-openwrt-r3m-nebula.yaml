@@ -3,7 +3,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - iac/openwrt/bpi-r3m/config/nebula/**
+      - iac/openwrt/bpi-r3m/configs/nebula/**
   workflow_dispatch:
 jobs:
   provision:
