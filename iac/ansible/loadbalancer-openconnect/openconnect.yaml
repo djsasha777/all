@@ -58,46 +58,51 @@
         state: present
 
     # --- Сборка ocserv из исходников ---
-    # --- Сборка ocserv из исходников (autotools) ---
-    - name: Create ocserv source directory
-      ansible.builtin.file:
-        path: /usr/src/ocserv
-        state: directory
-        mode: "0755"
-
-    - name: Download ocserv source tarball
-      ansible.builtin.get_url:
-        url: https://www.infradead.org/ocserv/download/ocserv-1.3.0.tar.xz
-        dest: /usr/src/ocserv/ocserv-1.3.0.tar.xz
-        mode: "0644"
-
-    - name: Extract ocserv source
-      ansible.builtin.unarchive:
-        src: /usr/src/ocserv/ocserv-1.3.0.tar.xz
+    # --- Сборка ocserv из официального GitLab-репо ---
+    - name: Clone ocserv from GitLab
+      ansible.builtin.git:
+        repo: https://gitlab.com/openconnect/ocserv.git
         dest: /usr/src/ocserv
-        remote_src: yes
+        version: master
+        force: yes
+
+    - name: Install autotools (if not already)
+      ansible.builtin.apt:
+        name:
+          - autoconf
+          - automake
+          - xz-utils
+        state: present
+
+    - name: Run autoreconf -fvi
+      ansible.builtin.shell:
+        cmd: |
+          set -e
+          cd /usr/src/ocserv
+          autoreconf -fvi
+        creates: /usr/src/ocserv/configure
 
     - name: Configure ocserv
       ansible.builtin.shell:
         cmd: |
           set -e
-          cd /usr/src/ocserv/ocserv-1.3.0
+          cd /usr/src/ocserv
           ./configure --sysconfdir=/etc/ --prefix=/usr
-        creates: /usr/src/ocserv/ocserv-1.3.0/Makefile
+        creates: /usr/src/ocserv/Makefile
 
     - name: Build ocserv
       ansible.builtin.shell:
         cmd: |
           set -e
-          cd /usr/src/ocserv/ocserv-1.3.0
+          cd /usr/src/ocserv
           make -j$(nproc)
-        creates: /usr/src/ocserv/ocserv-1.3.0/ocserv
+        creates: /usr/src/ocserv/ocserv
 
     - name: Install ocserv
       ansible.builtin.shell:
         cmd: |
           set -e
-          cd /usr/src/ocserv/ocserv-1.3.0
+          cd /usr/src/ocserv
           make install
         creates: /usr/sbin/ocserv
 
