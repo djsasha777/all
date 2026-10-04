@@ -160,6 +160,24 @@
         src: templates/oc.config.j2
         dest: /etc/ocserv/ocserv.conf
 
+    - name: Create systemd service for ocserv
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/ocserv.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=OpenConnect VPN server
+          After=network.target
+
+          [Service]
+          Type=forking
+          ExecStart=/usr/sbin/ocserv -c /etc/ocserv/ocserv.conf
+          ExecReload=/bin/kill -HUP $MAINPID
+          Restart=on-failure
+
+          [Install]
+          WantedBy=multi-user.target
+          
     - name: reload demon
       ansible.builtin.command:
         cmd: >-
