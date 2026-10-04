@@ -58,52 +58,43 @@
         state: present
 
     # --- Сборка ocserv из исходников ---
-    # --- Сборка ocserv из официального GitLab-репо ---
-    - name: Clone ocserv from GitLab
+    # --- Сборка ocserv из официального GitLab-репо (master, meson) ---
+    - name: Clone ocserv from GitLab (master)
       ansible.builtin.git:
         repo: https://gitlab.com/openconnect/ocserv.git
         dest: /usr/src/ocserv
         version: master
         force: yes
 
-    - name: Install autotools (if not already)
+    - name: Install meson and ninja
       ansible.builtin.apt:
         name:
-          - autoconf
-          - automake
-          - xz-utils
+          - meson
+          - ninja-build
         state: present
 
-    - name: Run autoreconf -fvi
+    - name: Setup meson build directory
       ansible.builtin.shell:
         cmd: |
           set -e
           cd /usr/src/ocserv
-          autoreconf -fvi
-        creates: /usr/src/ocserv/configure
+          meson setup build --prefix=/usr
+        creates: /usr/src/ocserv/build/meson-private
 
-    - name: Configure ocserv
+    - name: Build ocserv with ninja
       ansible.builtin.shell:
         cmd: |
           set -e
           cd /usr/src/ocserv
-          ./configure --sysconfdir=/etc/ --prefix=/usr
-        creates: /usr/src/ocserv/Makefile
-
-    - name: Build ocserv
-      ansible.builtin.shell:
-        cmd: |
-          set -e
-          cd /usr/src/ocserv
-          make -j$(nproc)
-        creates: /usr/src/ocserv/ocserv
+          ninja -C build
+        creates: /usr/src/ocserv/build/ocserv
 
     - name: Install ocserv
       ansible.builtin.shell:
         cmd: |
           set -e
           cd /usr/src/ocserv
-          make install
+          ninja -C build install
         creates: /usr/sbin/ocserv
 
     - name: Ensure ocserv binary exists
