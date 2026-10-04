@@ -1,4 +1,4 @@
-name: openwrt-bpi-r3m-nginx
+name: openwrt-bpi-r3m-nebula
 on:
   push:
     branches: [ "main" ]
@@ -11,5 +11,12 @@ jobs:
     steps:
       - name: Run script
         run: |
+          git clone http://192.168.111.1:3000/djsasha777/all.git
+          cp -rf all/iac/openwrt/bpi-r3m/configs/nebula/config.yaml /opt/nebula/config.yaml
+          scp root@213.182.204.227:/etc/nebula/ca.crt /opt/nebula/ca.crt
+          scp root@213.182.204.227:/etc/nebula/router.crt /opt/nebula/router.crt
+          scp root@213.182.204.227:/etc/nebula/router.key /opt/nebula/router.key
+          chmod 755 /opt/nebula/*
+          ifup nebula1
           echo "files copied and nebula restarted."
         shell: bash
