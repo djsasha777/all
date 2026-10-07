@@ -4,9 +4,9 @@
 
 WebServer webServer(8080);
 
-// Состояния двух логических ламп (оба пин 4)
-bool toggleState = false;  // Лампа 1: Toggle
-bool holdonState = false;  // Лампа 2: HoldOn 5с
+// Состояния (теперь независимые)
+bool toggleState = false;  
+bool holdonState = false;  
 
 // Таймеры
 unsigned long lastToggleTime = 0;
@@ -17,23 +17,32 @@ unsigned long lastHoldOnTime = 0;
 bool buttonHoldOnActive = false;
 const unsigned long HOLDON_TIMEOUT = 5000;
 
+// Используем константу для пина
+const uint8_t RELAY_PIN = 1; 
+
 struct DEV_ToggleLED : Service::LightBulb {
   SpanCharacteristic *power;
-  bool *statePtr;  // Указатель на toggleState
+  bool *statePtr;
 
   DEV_ToggleLED(bool *statePtr) : Service::LightBulb() {
     power = new Characteristic::On();
     this->statePtr = statePtr;
-    pinMode(4, OUTPUT);
-    digitalWrite(4, LOW);
+    pinMode(RELAY_PIN, OUTPUT);
+    digitalWrite(RELAY_PIN, LOW); // Старт с 0В
   }
 
   boolean update() {
     bool newVal = power->getNewVal();
     *statePtr = newVal;
-    digitalWrite(4, newVal);
+    
+    if (newVal) {
+      digitalWrite(RELAY_PIN, HIGH); // Включили: 3.3В
+      lastToggleTime = millis();
+    } else {
+      digitalWrite(RELAY_PIN, LOW);  // Выключили: 0В
+    }
+    
     Serial.println("Toggle HomeKit: " + String(newVal ? "ON" : "OFF"));
-    lastToggleTime = millis();  // Авто-OFF 0.5с
     return true;
   }
 };
@@ -45,14 +54,22 @@ struct DEV_HoldOnLED : Service::LightBulb {
   DEV_HoldOnLED(bool *statePtr) : Service::LightBulb() {
     power = new Characteristic::On();
     this->statePtr = statePtr;
+    // Пин уже настроен в DEV_ToggleLED
+    digitalWrite(RELAY_PIN, LOW); 
   }
 
   boolean update() {
     bool newVal = power->getNewVal();
     *statePtr = newVal;
-    digitalWrite(4, newVal);
+
+    if (newVal) {
+      digitalWrite(RELAY_PIN, HIGH); // Включили: 3.3В
+      lastHoldOnTime = millis();
+    } else {
+      digitalWrite(RELAY_PIN, LOW);  // Выключили: 0В
+    }
+    
     Serial.println("HoldOn HomeKit: " + String(newVal ? "ON" : "OFF"));
-    lastHoldOnTime = millis();  // Авто-OFF 5с
     return true;
   }
 };
@@ -63,20 +80,18 @@ DEV_HoldOnLED *holdonService;
 void checkTimeouts() {
   unsigned long now = millis();
   
-  // Toggle авто-OFF 0.5с (для обеих ламп)
-  if (lastToggleTime && (now - lastToggleTime >= TOGGLE_TIMEOUT)) {
-    digitalWrite(4, LOW);
+  // Toggle авто-OFF 0.5с
+  if (toggleState && lastToggleTime && (now - lastToggleTime >= TOGGLE_TIMEOUT)) {
+    digitalWrite(RELAY_PIN, LOW); // <--- Исправлено на LOW
     toggleState = false;
-    holdonState = false;
     if (toggleService) toggleService->power->setVal(false);
-    if (holdonService) holdonService->power->setVal(false);
     lastToggleTime = 0;
     Serial.println("Toggle AUTO-OFF 0.5s");
   }
   
   // HoldOn авто-OFF 5с
-  if (lastHoldOnTime && (now - lastHoldOnTime >= HOLDON_TIMEOUT)) {
-    digitalWrite(4, LOW);
+  if (holdonState && lastHoldOnTime && (now - lastHoldOnTime >= HOLDON_TIMEOUT)) {
+    digitalWrite(RELAY_PIN, LOW); // <--- Исправлено на LOW
     holdonState = false;
     if (holdonService) holdonService->power->setVal(false);
     lastHoldOnTime = 0;
@@ -100,18 +115,16 @@ void setupWeb() {
 
   webServer.on("/", HTTP_GET, []() {
     checkTimeouts();
-    String html = "<!DOCTYPE html><html><head><meta charset='utf-8'><meta http-equiv='refresh' content='1'><title>Relay Pin4</title></head><body>";
-    html += "<h1>Pin 4: 2 Buttons / 2 HomeKit Lights</h1>";
-    html += "<p>Physical: " + String(digitalRead(4) ? "HIGH" : "LOW") + "</p>";
+    String html = "<!DOCTYPE html><html><head><meta charset='utf-8'><meta http-equiv='refresh' content='1'><title>Relay Pin1</title></head><body>";
+    html += "<h1>Pin 1: 2 Buttons / 2 HomeKit Lights</h1>";
+    html += "<p>Physical: " + String(digitalRead(RELAY_PIN) ? "3.3V (HIGH)" : "0V (LOW)") + "</p>";
     
-    // Toggle кнопка (0.5с)
     if (buttonToggleActive) {
       html += "<p>Toggle: " + String((TOGGLE_TIMEOUT-(millis()-lastToggleTime))/1000.0,1) + "s</p><button disabled>1.Toggle 0.5s</button><br>";
     } else {
       html += "<a href='/toggle'><button>1.Toggle 0.5s</button></a><br>";
     }
     
-    // HoldOn кнопка (5с)
     if (buttonHoldOnActive || lastHoldOnTime) {
       float t = (HOLDON_TIMEOUT-(millis()-lastHoldOnTime))/1000.0;
       html += "<p>HoldOn: " + String(t,1) + "s</p><button disabled>2.HoldOn 5s</button>";
@@ -124,21 +137,21 @@ void setupWeb() {
   });
 
   webServer.on("/toggle", HTTP_GET, []() {
-    bool newState = !toggleState;  // Toggle реально переключает!
-    digitalWrite(4, newState);
+    bool newState = !toggleState; 
+    digitalWrite(RELAY_PIN, newState ? HIGH : LOW);
     toggleState = newState;
-    holdonState = newState;
+    // holdonState больше не трогаем принудительно!
     if (toggleService) toggleService->power->setVal(newState);
-    lastToggleTime = millis();
+    if (newState) lastToggleTime = millis();
     buttonToggleActive = true;
     Serial.println("Web Toggle: " + String(newState ? "ON" : "OFF"));
     webServer.send(200, "text/html", "<script>location='/'</script>");
   });
 
   webServer.on("/holdon", HTTP_GET, []() {
-    digitalWrite(4, HIGH);
+    digitalWrite(RELAY_PIN, HIGH);
     holdonState = true;
-    toggleState = true;
+    // toggleState больше не трогаем принудительно!
     if (holdonService) holdonService->power->setVal(true);
     lastHoldOnTime = millis();
     buttonHoldOnActive = true;
@@ -153,14 +166,14 @@ void setup() {
   Serial.begin(115200);
   homeSpan.begin(Category::Lighting, "Relay Dual");
 
-  // Accessory 1: Toggle Light (0.5s auto-off)
   new SpanAccessory();
-  new Service::AccessoryInformation(); new Characteristic::Identify();
+  new Service::AccessoryInformation(); 
+  new Characteristic::Identify();
   toggleService = new DEV_ToggleLED(&toggleState);
 
-  // Accessory 2: HoldOn Light (5s auto-off)
   new SpanAccessory();
-  new Service::AccessoryInformation(); new Characteristic::Identify();
+  new Service::AccessoryInformation(); 
+  new Characteristic::Identify();
   holdonService = new DEV_HoldOnLED(&holdonState);
 
   homeSpan.setWifiCallback(setupWeb);
