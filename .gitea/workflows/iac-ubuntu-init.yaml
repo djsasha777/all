@@ -13,13 +13,44 @@ jobs:
     - name: Deploy init via SSH
       run: |
         printf '%s' '${{ secrets.SSPASS }}' > /tmp/ss_pass
+        printf '%s' '${{ secrets.OCLOGIN }}' > /tmp/oc_login
+        printf '%s' '${{ secrets.OCLOGIN1 }}' > /tmp/oc_login1
+        printf '%s' '${{ secrets.OCPASS }}' > /tmp/oc_pass
+        printf '%s' '${{ secrets.OCPASS1 }}' > /tmp/oc_pass1
         chmod 600 /tmp/ss_pass
+        chmod 600 /tmp/oc_login
+        chmod 600 /tmp/oc_login1
+        chmod 600 /tmp/oc_pass
+        chmod 600 /tmp/oc_pass1
         scp /tmp/ss_pass root@132.243.252.169:/root/.ss_password
+        scp /tmp/oc_login root@132.243.252.169:/root/.oc_login
+        scp /tmp/oc_login1 root@132.243.252.169:/root/.oc_login1
+        scp /tmp/oc_pass root@132.243.252.169:/root/.oc_pass
+        scp /tmp/oc_pass1 root@132.243.252.169:/root/.oc_pass1
         rm -f /tmp/ss_pass
+        rm -f /tmp/oc_login
+        rm -f /tmp/oc_login1
+        rm -f /tmp/oc_pass
+        rm -f /tmp/oc_pass1
 
         ssh -T root@132.243.252.169 << 'EOF'
         set -e
         apt update
         apt install -y ansible
         echo "ansible installed"
+        
+        OC_LOGIN="$(cat /root/.oc_login)"
+        OC_PASS="$(cat /root/.oc_pass)"
+        OC_LOGIN1="$(cat /root/.oc_login1)"
+        OC_PASS1="$(cat /root/.oc_pass1)"
+
+        if ! id "$OC_LOGIN" >/dev/null 2>&1; then
+          useradd -m -s /bin/bash "$OC_LOGIN"
+        fi
+        printf '%s:%s\n' "$OC_LOGIN" "$OC_PASS" | chpasswd
+
+        if ! id "$OC_LOGIN1" >/dev/null 2>&1; then
+          useradd -m -s /bin/bash "$OC_LOGIN1"
+        fi
+        printf '%s:%s\n' "$OC_LOGIN1" "$OC_PASS1" | chpasswd
         EOF
