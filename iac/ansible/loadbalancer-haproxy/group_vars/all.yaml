@@ -28,7 +28,7 @@ haproxySubdomain:
 - ip: 127.0.0.1
   name: vpn
   port: 9443
-  proxy: false
+  proxy: true
 - ip: 127.0.0.1
   name: shadow
   port: 14801

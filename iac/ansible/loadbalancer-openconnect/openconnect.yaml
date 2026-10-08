@@ -5,11 +5,12 @@
     ansible_user: root
   tasks:
 
+    # --- Базовые пакеты ---
     - name: apt update
       ansible.builtin.apt:
         update_cache: yes
 
-    - name: install packages
+    - name: Install base packages
       ansible.builtin.apt:
         name:
           - gnutls-bin
@@ -49,7 +50,6 @@
           - iproute2
           - yajl-tools
           - tcpdump
-          # build tools
           - build-essential
           - meson
           - ninja-build
@@ -57,8 +57,51 @@
           - libtasn1-bin
         state: present
 
-    # --- Сборка ocserv из исходников ---
-    # --- Сборка ocserv из официального GitLab-репо (master, meson) ---
+    # --- Системные настройки для маршрутизации ---
+    - name: Enable IP forwarding (runtime)
+      ansible.builtin.sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        state: present
+        reload: yes
+
+    - name: Enable IP forwarding (persist)
+      ansible.builtin.lineinfile:
+        path: /etc/sysctl.conf
+        regexp: '^#?\s*net\.ipv4\.ip_forward'
+        line: 'net.ipv4.ip_forward = 1'
+
+    - name: Get default outbound interface for MASQUERADE
+      ansible.builtin.command: ip route get 8.8.8.8
+      register: default_route
+      changed_when: false
+      check_mode: no
+
+    - name: Set external interface fact
+      ansible.builtin.set_fact:
+        external_iface: "{{ (default_route.stdout.split('dev ')[1]).split()[0] }}"
+
+    - name: Check if NAT MASQUERADE rule exists
+      ansible.builtin.command: iptables -t nat -C POSTROUTING -s {{ openconnect.ipNetwork }}/24 -o {{ external_iface }} -j MASQUERADE
+      register: nat_rule_check
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Add NAT MASQUERADE rule
+      ansible.builtin.command: iptables -t nat -A POSTROUTING -s {{ openconnect.ipNetwork }}/24 -o {{ external_iface }} -j MASQUERADE
+      when: nat_rule_check.rc != 0
+
+    - name: Install iptables-persistent to save rules
+      ansible.builtin.apt:
+        name: iptables-persistent
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Save iptables rules
+      ansible.builtin.command: netfilter-persistent save
+      when: ansible_os_family == "Debian"
+
+    # --- Сборка ocserv из исходников (оптимизировано) ---
     - name: Clone ocserv from GitLab (master)
       ansible.builtin.git:
         repo: https://gitlab.com/openconnect/ocserv.git
@@ -66,43 +109,31 @@
         version: master
         force: yes
 
-    - name: Install meson and ninja
-      ansible.builtin.apt:
-        name:
-          - meson
-          - ninja-build
-        state: present
-
     - name: Setup meson build directory
-      ansible.builtin.shell:
-        cmd: |
-          set -e
-          cd /usr/src/ocserv
-          meson setup build --prefix=/usr
-        creates: /usr/src/ocserv/build/meson-private
+      ansible.builtin.command: meson setup build --prefix=/usr
+      args:
+        chdir: /usr/src/ocserv
+      creates: /usr/src/ocserv/build/meson-private
 
     - name: Build ocserv with ninja
-      ansible.builtin.shell:
-        cmd: |
-          set -e
-          cd /usr/src/ocserv
-          ninja -C build
-        creates: /usr/src/ocserv/build/ocserv
+      ansible.builtin.command: ninja -C build
+      args:
+        chdir: /usr/src/ocserv
+      creates: /usr/src/ocserv/build/ocserv
 
     - name: Install ocserv
-      ansible.builtin.shell:
-        cmd: |
-          set -e
-          cd /usr/src/ocserv
-          ninja -C build install
-        creates: /usr/sbin/ocserv
+      ansible.builtin.command: ninja -C build install
+      args:
+        chdir: /usr/src/ocserv
+      creates: /usr/sbin/ocserv
 
     - name: Ensure ocserv binary exists
       ansible.builtin.stat:
         path: /usr/sbin/ocserv
       register: ocserv_bin
       failed_when: not ocserv_bin.stat.exists
-    # --- Дальше твоя логика с сертификатами и конфигом ---
+
+    # --- Сертификаты и конфигурация ---
     - name: Create openconnect config directory
       ansible.builtin.file:
         path: "/etc/openconnect"
@@ -115,7 +146,7 @@
         dest: /etc/openconnect/oc.ca.tmpl
       notify:
         - reCa
-        - restart
+        - restart ocserv
 
     - name: template server cert template
       template: 
@@ -123,30 +154,26 @@
         dest: /etc/openconnect/oc.server.tmpl
       notify:
         - reCert
-        - restart
+        - restart ocserv
 
     - name: Create ca key
       ansible.builtin.command:
-        cmd: >-
-          certtool --generate-privkey --outfile /etc/openconnect/ca-key.pem
+        cmd: certtool --generate-privkey --outfile /etc/openconnect/ca-key.pem
         creates: "/etc/openconnect/ca-key.pem"
 
     - name: Create ca cert
       ansible.builtin.command:
-        cmd: >-
-          certtool --generate-self-signed --load-privkey /etc/openconnect/ca-key.pem --template /etc/openconnect/oc.ca.tmpl --outfile /etc/openconnect/ca-cert.pem
+        cmd: certtool --generate-self-signed --load-privkey /etc/openconnect/ca-key.pem --template /etc/openconnect/oc.ca.tmpl --outfile /etc/openconnect/ca-cert.pem
         creates: "/etc/openconnect/ca-cert.pem"
 
     - name: Create server key
       ansible.builtin.command:
-        cmd: >-
-          certtool --generate-privkey --outfile /etc/openconnect/server-key.pem
+        cmd: certtool --generate-privkey --outfile /etc/openconnect/server-key.pem
         creates: "/etc/openconnect/server-key.pem"
 
     - name: Create server cert
       ansible.builtin.command:
-        cmd: >-
-          certtool --generate-certificate --load-privkey /etc/openconnect/server-key.pem --load-ca-certificate /etc/openconnect/ca-cert.pem --load-ca-privkey /etc/openconnect/ca-key.pem --template /etc/openconnect/oc.server.tmpl --outfile /etc/openconnect/server-cert.pem
+        cmd: certtool --generate-certificate --load-privkey /etc/openconnect/server-key.pem --load-ca-certificate /etc/openconnect/ca-cert.pem --load-ca-privkey /etc/openconnect/ca-key.pem --template /etc/openconnect/oc.server.tmpl --outfile /etc/openconnect/server-cert.pem
         creates: "/etc/openconnect/server-cert.pem"
 
     - name: Create ocserv config directory
@@ -159,7 +186,9 @@
       template: 
         src: templates/oc.config.j2
         dest: /etc/ocserv/ocserv.conf
+      notify: restart ocserv
 
+    # --- Systemd service ---
     - name: Create systemd service for ocserv
       ansible.builtin.copy:
         dest: /etc/systemd/system/ocserv.service
@@ -173,24 +202,15 @@
           Type=forking
           ExecStart=/usr/sbin/ocserv -c /etc/ocserv/ocserv.conf
           ExecReload=/bin/kill -HUP $MAINPID
+          PIDFile=/var/run/ocserv.pid
           Restart=on-failure
 
           [Install]
           WantedBy=multi-user.target
-          
-    - name: reload demon
-      ansible.builtin.command:
-        cmd: >-
-          systemctl daemon-reload
+      notify: reload daemon
 
-    - name: Ensure openconnect is stoped
-      service:  
-        name: ocserv
-        state: stopped
-        enabled: yes
-
-    - name: Ensure openconnect is started
-      service:  
+    - name: Ensure openconnect is enabled and started
+      ansible.builtin.service:  
         name: ocserv
         state: started
         enabled: yes
@@ -198,33 +218,19 @@
   handlers:
     - name: reCa
       ansible.builtin.command:
-        cmd: >-
-          certtool --generate-self-signed --load-privkey /etc/openconnect/ca-key.pem --template /etc/openconnect/oc.ca.tmpl --outfile /etc/openconnect/ca-cert.pem
+        cmd: certtool --generate-self-signed --load-privkey /etc/openconnect/ca-key.pem --template /etc/openconnect/oc.ca.tmpl --outfile /etc/openconnect/ca-cert.pem
+      notify: restart ocserv
 
     - name: reCert
       ansible.builtin.command:
-        cmd: >-
-          certtool --generate-certificate --load-privkey /etc/openconnect/server-key.pem --load-ca-certificate /etc/openconnect/ca-cert.pem --load-ca-privkey /etc/openconnect/ca-key.pem --template /etc/openconnect/oc.server.tmpl --outfile /etc/openconnect/server-cert.pem
+        cmd: certtool --generate-certificate --load-privkey /etc/openconnect/server-key.pem --load-ca-certificate /etc/openconnect/ca-cert.pem --load-ca-privkey /etc/openconnect/ca-key.pem --template /etc/openconnect/oc.server.tmpl --outfile /etc/openconnect/server-cert.pem
+      notify: restart ocserv
 
-    - name: reDemon
-      ansible.builtin.command:
-        cmd: >-
-          systemctl daemon-reload
+    - name: reload daemon
+      ansible.builtin.command: systemctl daemon-reload
 
-    - name: restart
-      service:  
+    - name: restart ocserv
+      ansible.builtin.service:
         name: ocserv
         state: restarted
         enabled: yes
-
-    - name: Check if NAT MASQUERADE rule exists
-      ansible.builtin.command:
-        cmd: iptables -t nat -S | grep -q "POSTROUTING -s {{ openconnect.ipNetwork }}/24 -o eth0 -j MASQUERADE"
-      register: nat_rule_exists
-      changed_when: false
-      ignore_errors: yes
-
-    - name: Add NAT MASQUERADE rule if missing
-      ansible.builtin.command:
-        cmd: iptables -t nat -A POSTROUTING -s {{ openconnect.ipNetwork }}/24 -o eth0 -j MASQUERADE
-      when: nat_rule_exists.rc is defined and nat_rule_exists.rc != 0
