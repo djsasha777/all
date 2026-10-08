@@ -102,30 +102,29 @@
       when: ansible_os_family == "Debian"
 
     # --- Сборка ocserv из исходников (оптимизировано) ---
-    - name: Clone ocserv from GitLab (master)
+    - name: Clone ocserv from GitLab
       ansible.builtin.git:
-        repo: https://gitlab.com/openconnect/ocserv.git
-        dest: /usr/src/ocserv
-        version: master
-        force: yes
+        repo: "https://gitlab.com/openconnect/ocserv.git"
+        dest: "/usr/src/ocserv"
+        version: "master"
+        force: true
 
     - name: Setup meson build directory
-      ansible.builtin.command: meson setup build --prefix=/usr
-      args:
+      ansible.builtin.command:
+        cmd: meson setup build --prefix=/usr
         chdir: /usr/src/ocserv
-      creates: /usr/src/ocserv/build/meson-private
+        creates: /usr/src/ocserv/build/meson-private
 
     - name: Build ocserv with ninja
-      ansible.builtin.command: ninja -C build
-      args:
+      ansible.builtin.command:
+        cmd: ninja -C build
         chdir: /usr/src/ocserv
-      creates: /usr/src/ocserv/build/ocserv
+        creates: /usr/src/ocserv/build/ocserv
 
     - name: Install ocserv
-      ansible.builtin.command: ninja -C build install
-      args:
+      ansible.builtin.command:
+        cmd: ninja -C build install
         chdir: /usr/src/ocserv
-      creates: /usr/sbin/ocserv
 
     - name: Ensure ocserv binary exists
       ansible.builtin.stat:
