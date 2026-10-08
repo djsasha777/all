@@ -70,7 +70,7 @@ backend main
  #{{ host.name }}
  acl {{ host.name }} req.ssl_sni -i {{ host.name }}.{{ dnsName }}
  use-server {{ host.name }} if {{ host.name }}
- server {{ host.name }} {{ host.ip }}:{{ host.port }} {% if host.proxy == true %} send-proxy-v2 {% endif %}
+ server {{ host.name }} {{ host.ip }}:{{ host.port }}{% if host.proxy == true %} send-proxy-v2 {% endif %}
 
 {% endfor %}
 
