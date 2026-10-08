@@ -3,7 +3,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - iac/ansible/init/**
+      - iac/ansible/loadbalancer-init/**
   workflow_dispatch:
 
 jobs:
