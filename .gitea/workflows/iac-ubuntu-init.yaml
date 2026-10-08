@@ -12,9 +12,10 @@ jobs:
     steps:
     - name: Deploy init via SSH
       run: |
-        cat ${{ secrets.SSPASS }} > /tmp/ss_pass
-        scp -rf /tmp/ss_pass root@132.243.252.169:/root/.ss_password
-        rm /tmp/ss_pass
+        printf '%s' '${{ secrets.SSPASS }}' > /tmp/ss_pass
+        chmod 600 /tmp/ss_pass
+        scp /tmp/ss_pass root@132.243.252.169:/root/.ss_password
+        rm -f /tmp/ss_pass
 
         ssh -T root@132.243.252.169 << 'EOF'
         set -e
