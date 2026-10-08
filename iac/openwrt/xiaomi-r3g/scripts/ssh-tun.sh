@@ -5,7 +5,7 @@ opkg install sshtunnel
 
 cat  >> /etc/config/sshtunnel <<EOF
 config server '79rub'
-	option hostname '213.182.204.227'
+	option hostname '132.243.252.169'
 	option user 'root'
 	option IdentityFile '/root/.ssh/id_ed25519'
 	option LogLevel 'INFO'

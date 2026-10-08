@@ -7,7 +7,7 @@ tunnel:
   image: latest
   localDev: ens18
   remoteDev: eth0
-  remoteHost: 213.182.204.227
+  remoteHost: 132.243.252.169
   standalone: true
 
 bgp:

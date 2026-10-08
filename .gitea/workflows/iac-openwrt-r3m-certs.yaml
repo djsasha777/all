@@ -13,9 +13,9 @@ jobs:
         run: |
           git clone http://192.168.111.1:3000/djsasha777/all.git
 
-          scp -r all/iac/ansible/loadbalancer-haproxy root@213.182.204.227:/root/
+          scp -r all/iac/ansible/loadbalancer-haproxy root@132.243.252.169:/root/
 
-          ssh -T root@213.182.204.227 << 'EOF'
+          ssh -T root@132.243.252.169 << 'EOF'
           set -e
           cd /root/loadbalancer-haproxy
           sed -i 's/acmeEnabled: false/acmeEnabled: true/' group_vars/all.yaml
@@ -24,7 +24,7 @@ jobs:
           chmod +x -R /var/run/acme
           chmod +x -R /var/run/acme/challenge
           /usr/lib/acme/client/acme.sh --debug --renew --force --home /etc/acme -d spongo.ru
-          ssh -T root@213.182.204.227 << 'EOF'
+          ssh -T root@132.243.252.169 << 'EOF'
           set -e
           cd /root/loadbalancer-haproxy
           sed -i 's/acmeEnabled: true/acmeEnabled: false/' group_vars/all.yaml
