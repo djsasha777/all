@@ -9,11 +9,11 @@ struct DEV_LED : Service::LightBulb {
     power = new Characteristic::On();
     this->ledPin = ledPin;
     pinMode(ledPin, OUTPUT);
-    digitalWrite(ledPin, HIGH); // реле выключено при активном LOW
+    digitalWrite(ledPin, LOW); // реле выключено при активном LOW
   }
 
   boolean update() {
-    digitalWrite(ledPin, !power->getNewVal()); // инверсия для активного LOW
+    digitalWrite(ledPin, power->getNewVal()); // инверсия для активного LOW add !
     return true;
   }
 };
@@ -27,7 +27,7 @@ void setup() {
   new SpanAccessory();
     new Service::AccessoryInformation();
       new Characteristic::Identify();
-    ledService = new DEV_LED(37);
+    ledService = new DEV_LED(4);
 }
 
 void loop() {

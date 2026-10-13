@@ -29,7 +29,6 @@ DimmableLED *myLED;
 
 void setup() {
   Serial.begin(115200);
-  WiFi.setTxPower(WIFI_POWER_8_5dBm);
   pinMode(ledPin, OUTPUT);
   analogWrite(ledPin, 0);
 
