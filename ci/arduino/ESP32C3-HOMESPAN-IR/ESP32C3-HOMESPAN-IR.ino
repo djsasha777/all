@@ -6,7 +6,7 @@
 #include <ir_Midea.h>
 
 // GPIO, к которому подключён ИК-светодиод
-constexpr uint8_t IR_PIN = 16;
+constexpr uint8_t IR_PIN = 4;
 
 // Объект для отправки команд по протоколу Midea
 IRMideaAC mideaAC(IR_PIN);
